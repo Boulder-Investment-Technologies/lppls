@@ -5,6 +5,26 @@
 ## Overview
 The LPPL model provides a flexible framework to detect bubbles and predict regime changes of a financial asset. A bubble is defined as a faster-than-exponential increase in asset price, that reflects positive feedback loop of higher return anticipations competing with negative feedback spirals of crash expectations. It models a bubble price as a power law with a finite-time singularity decorated by oscillations with a frequency increasing with time. 
 
+
+
+
+Here is the model:
+
+<img src="https://latex.codecogs.com/svg.latex?E[\text{ln&space;}p(t)]=A+B(t_c-t)^m&space;+C(t_c-t)^m&space;cos(\omega&space;ln(t_c-t)-\phi)" title="LPPLS Model" />
+
+  where:
+
+  - <img src="https://latex.codecogs.com/svg.latex?E[\text{ln&space;}p(t)]&space;:=" title="Expected Log Price" /> expected log price at the date of the termination of the bubble
+  - <img src="https://latex.codecogs.com/svg.latex?t_c&space;:=" title="Critcal Time" /> critical time (date of termination of the bubble and transition in a new regime) 
+  - <img src="https://latex.codecogs.com/svg.latex?A&space;:=" title="A" /> expected log price at the peak when the end of the bubble is reached at <img src="https://latex.codecogs.com/svg.latex?t_c" title="Critcal Time" />
+  - <img src="https://latex.codecogs.com/svg.latex?B&space;:=" title="B" /> amplitude of the power law acceleration
+  - <img src="https://latex.codecogs.com/svg.latex?C&space;:=" title="C" /> amplitude of the log-periodic oscillations
+  - <img src="https://latex.codecogs.com/svg.latex?m&space;:=" title="m" /> degree of the super exponential growth
+  - <img src="https://latex.codecogs.com/svg.latex?\omega&space;:=" title="Omega" /> scaling ratio of the temporal hierarchy of osciallations
+  - <img src="https://latex.codecogs.com/svg.latex?\phi&space;:=" title="Phi" /> time scale of the oscillations
+    
+The model has three components representing a bubble. The first, <img src="https://latex.codecogs.com/svg.latex?A+B(t_c-t)^m" title="LPPLS Term 1" />, handles the hyperbolic power law. For <img src="https://latex.codecogs.com/svg.latex?m<1" title="M less than 1" /> when the price growth becomes unsustainable, and at <img src="https://latex.codecogs.com/svg.latex?t_c" title="Critcal Time" /> the growth rate becomes infinite. The second term, <img src="https://latex.codecogs.com/svg.latex?C(t_c-t)^m" title="LPPLS Term 2" />, controls the amplitude of the oscillations. It drops to zero at the critical time <img src="https://latex.codecogs.com/svg.latex?t_c" title="Critcal Time" />. The third term, <img src="https://latex.codecogs.com/svg.latex?cos(\omega&space;ln(t_c-t)-\phi)" title="LPPLS Term 3" />, models the frequency of the osciallations. They become infinite at <img src="https://latex.codecogs.com/svg.latex?t_c" title="Critcal Time" />.
+
 ## Installation
 Dependencies
 
