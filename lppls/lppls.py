@@ -1,20 +1,11 @@
-import itertools
-import concurrent.futures
 import multiprocessing
 import numpy as np
 import pandas as pd
 import random
-from scipy.optimize import least_squares, minimize
+from scipy.optimize import minimize
 from scipy import linalg
 import statistics as stats
-import time
-import warnings
-import time
-import pdb
-from tqdm import tqdm
 
-
-# warnings.filterwarnings('ignore')
 
 class LPPLS(object):
     def __init__(self, price_data, securities):
