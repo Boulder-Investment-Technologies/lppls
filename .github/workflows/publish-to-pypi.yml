@@ -27,6 +27,3 @@ jobs:
       uses: pypa/gh-action-pypi-publish@master
       with:
         password: ${{ secrets.pypi_password }}}}
-      run: |
-        python setup.py sdist bdist_wheel
-        twine upload dist/*
