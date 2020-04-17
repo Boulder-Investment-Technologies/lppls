@@ -38,6 +38,3 @@ if __name__ == '__main__':
     duration = end - start
     print(duration)
 ```
-
-## How to deploy to pypi
-todo: setup github workflow
