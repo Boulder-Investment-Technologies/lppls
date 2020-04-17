@@ -1,2 +1,2 @@
 # lppls
-Library for fitting the LPPLS model to data.
+`lppls` is a Python module for fitting the LPPLS model to data.
