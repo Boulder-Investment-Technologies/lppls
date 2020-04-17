@@ -232,15 +232,17 @@ class LPPLS(object):
                         c1 = lin_vals[2]
                         c2 = lin_vals[3]
 
+                        c = (c1 ** 2 + c2 ** 2) ** (0.5)
+
                         # filtering conditions
                         tc_in_range = tLen - (tLen * 0.05) < tc < tLen + (tLen * 0.1)
                         m_in_range = 0.01 < m < 1.2
                         w_in_range = 2 < w < 25
                         n_oscillation = ((w / 2) * np.log(abs((tc - (i * 5)) / (tLen)))) > 2.5
                         # for bubble end flag
-                        damping_bef = (m * abs(b)) / (w * abs(c1 + c2)) > 0.8
+                        damping_bef = (m * abs(b)) / (w * abs(c)) > 0.8
                         # for bubble early warning
-                        damping_bew = (m * abs(b)) / (w * abs(c1 + c2)) > 0.0
+                        damping_bew = (m * abs(b)) / (w * abs(c)) > 0.0
 
                         if (tc_in_range and m_in_range and w_in_range and n_oscillation and damping_bef):
                             ds_lppls_confidence_bef = True
