@@ -1,5 +1,9 @@
-# Log Periodic Power Law Singularity Model
+# Log Periodic Power Law Singularity (LPPLS) Model 
 `lppls` is a Python module for fitting the LPPLS model to data.
+
+
+## Overview
+The LPPL model provides a flexible framework to detect bubbles and predict regime changes of a financial asset. A bubble is defined as a faster-than-exponential increase in asset price, that reflects positive feedback loop of higher return anticipations competing with negative feedback spirals of crash expectations. It models a bubble price as a power law with a finite-time singularity decorated by oscillations with a frequency increasing with time. 
 
 ## Installation
 Dependencies
@@ -17,7 +21,7 @@ If you already have a working installation of numpy and scipy, the easiest way t
 pip install -U lppls
 ```
 
-## Example Use:
+## Example Use
 ```python
 from lppls import lppls
 import pandas as pd
@@ -38,3 +42,7 @@ if __name__ == '__main__':
     duration = end - start
     print(duration)
 ```
+
+## References
+ - Filimonov, V. and Sornette, D. A Stable and Robust Calibration Scheme of the Log-Periodic Power Law Model. Physica A: Statistical Mechanics and its Applications. 2013
+ - Sornette, D. Why Stock Markets Crash: Critical Events in Complex Financial Systems. Princeton University Press. 2002.
