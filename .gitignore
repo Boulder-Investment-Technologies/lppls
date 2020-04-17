@@ -1,3 +1,5 @@
 dist
-.idea
 lppls.egg-info/
+
+.idea
+.DS_Store
