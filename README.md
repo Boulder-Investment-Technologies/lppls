@@ -39,7 +39,6 @@ Dependencies
  - Matplotlib (>= 3.1.1)
 
 User installation
-If you already have a working installation of numpy and scipy, the easiest way to install scikit-learn is using pip
 ```
 pip install -U lppls
 ```
