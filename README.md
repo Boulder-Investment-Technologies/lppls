@@ -1,4 +1,3 @@
-![PyPI 📦](https://github.com/Boulder-Investment-Technologies/lppls/workflows/PyPI%20%F0%9F%93%A6/badge.svg?branch=master)
 # Log Periodic Power Law Singularity (LPPLS) Model 
 `lppls` is a Python module for fitting the LPPLS model to data.
 
@@ -46,17 +45,16 @@ pip install -U lppls
 
 ## Example Use
 ```python
-from datetime import datetime
 from lppls import lppls
 import numpy as np
 import pandas as pd
 %matplotlib inline
 
 # read example dataset into df 
-data = pd.read_csv('data/sp500.csv', index_col='Date', parse_dates=True)
+data = pd.read_csv('/Users/joshnielsen/research/learning-lppl/data/sp500.csv', index_col='Date')
 
 # convert index col to list of timestamps
-timestamp = [datetime.timestamp(dt) for dt in data.index]
+timestamp = np.linspace(0, len(data)-1, len(data))
 
 # create list of observation data, in this case, 
 # daily adjusted close prices of the S&P 500
