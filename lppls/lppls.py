@@ -12,7 +12,7 @@ class LPPLS(object):
     def __init__(self, use_ln, observations):
         """
         Args:
-            use_ln (bool): Whether to take the natural logarithm of the observed data.
+            use_ln (bool): Whether to take the natural logarithm of the observations.
             observations (np.array): Mx2 matrix with timestamp and observed value.
         """
         self.use_ln = use_ln
@@ -82,8 +82,10 @@ class LPPLS(object):
         return np.multiply(self._yi(price_series), self._hi(tc, m, w, time_series))
 
     def lppls(self, t, tc, m, w, a, b, c1, c2):
-        tc_t_delta = np.log(tc - t) if self.use_ln else tc - t
-        return a + np.power(tc - t, m) * (b + ((c1 * np.cos(w * tc_t_delta)) + (c2 * np.sin(w * tc_t_delta))))
+        if self.use_ln:
+            return a + np.power(tc - t, m) * (b + ((c1 * np.cos(w * np.log(tc - t))) + (c2 * np.sin(w * np.log(tc - t)))))
+        else:
+            return a + np.power(tc - t, m) * (b + ((c1 * np.cos(w * (tc - t))) + (c2 * np.sin(w * (tc - t)))))
 
     def func_restricted(self, x, *args):
         '''
@@ -345,12 +347,9 @@ class LPPLS(object):
 
             try:
                 cofs = minimize(
-                    args=(observations, search_bounds),
+                    args=observations,
                     fun=self.func_restricted,
                     method=minimizer,
-                    options={
-                        'adaptive': True
-                    },
                     x0=seed
                 )
 
@@ -373,6 +372,7 @@ class LPPLS(object):
                     return tc, m, w, a, b, c
 
                 else:
+                    print('cofs not successful failed')
                     search_count += 1
             except Exception as e:
                 print('minimize failed: {}'.format(e))
