@@ -5,7 +5,7 @@
 
 
 ## Overview
-The LPPL model provides a flexible framework to detect bubbles and predict regime changes of a financial asset. A bubble is defined as a faster-than-exponential increase in asset price, that reflects positive feedback loop of higher return anticipations competing with negative feedback spirals of crash expectations. It models a bubble price as a power law with a finite-time singularity decorated by oscillations with a frequency increasing with time. 
+The LPPLS model provides a flexible framework to detect bubbles and predict regime changes of a financial asset. A bubble is defined as a faster-than-exponential increase in asset price, that reflects positive feedback loop of higher return anticipations competing with negative feedback spirals of crash expectations. It models a bubble price as a power law with a finite-time singularity decorated by oscillations with a frequency increasing with time. 
 
 Here is the model:
 
@@ -19,7 +19,7 @@ Here is the model:
   - <img src="https://latex.codecogs.com/svg.latex?B&space;:=" title="B" /> amplitude of the power law acceleration
   - <img src="https://latex.codecogs.com/svg.latex?C&space;:=" title="C" /> amplitude of the log-periodic oscillations
   - <img src="https://latex.codecogs.com/svg.latex?m&space;:=" title="m" /> degree of the super exponential growth
-  - <img src="https://latex.codecogs.com/svg.latex?\omega&space;:=" title="Omega" /> scaling ratio of the temporal hierarchy of osciallations
+  - <img src="https://latex.codecogs.com/svg.latex?\omega&space;:=" title="Omega" /> scaling ratio of the temporal hierarchy of oscillations
   - <img src="https://latex.codecogs.com/svg.latex?\phi&space;:=" title="Phi" /> time scale of the oscillations
     
 The model has three components representing a bubble. The first, <img src="https://latex.codecogs.com/svg.latex?A+B(t_c-t)^m" title="LPPLS Term 1" />, handles the hyperbolic power law. For <img src="https://latex.codecogs.com/svg.latex?m<1" title="M less than 1" /> when the price growth becomes unsustainable, and at <img src="https://latex.codecogs.com/svg.latex?t_c" title="Critcal Time" /> the growth rate becomes infinite. The second term, <img src="https://latex.codecogs.com/svg.latex?C(t_c-t)^m" title="LPPLS Term 2" />, controls the amplitude of the oscillations. It drops to zero at the critical time <img src="https://latex.codecogs.com/svg.latex?t_c" title="Critcal Time" />. The third term, <img src="https://latex.codecogs.com/svg.latex?cos(\omega&space;ln(t_c-t)-\phi)" title="LPPLS Term 3" />, models the frequency of the osciallations. They become infinite at <img src="https://latex.codecogs.com/svg.latex?t_c" title="Critcal Time" />.
@@ -47,24 +47,38 @@ pip install -U lppls
 
 ## Example Use
 ```python
+from datetime import datetime
 from lppls import lppls
+import numpy as np
 import pandas as pd
-import tqdm
-import time 
 
-if __name__ == '__main__':
-    start = time.time()
-    data = pd.read_csv('<location>.csv', index_col='<index_col>', parse_dates=True)
-    signals_list = []
-    asset_list = data.columns.tolist()
-    window = 126
-    for seq in tqdm(range(data.shape[0] - window)):
-        window_data = data.iloc[seq:seq + window].copy()
-        lppl_model = lppls.LPPLS(window_data, asset_list)
-        signals_list.append(lppl_model.fetch_indicators(126, 5, 21, 5))
-    end = time.time()
-    duration = end - start
-    print(duration)
+SECONDS_IN_A_MONTH = 2.628e+6
+
+data = pd.read_csv('data/sp500.csv', index_col='Date')
+
+timestamp = [datetime.timestamp(dt) for dt in data.index]
+price = [p for p in data['Adj Close']]
+last_ts = timestamp[-1]
+
+observations = np.array([timestamp, price])
+
+# set limits for non-linear params
+search_bounds = [
+    (last_ts, last_ts + SECONDS_IN_A_MONTH),    # Critical Time 
+    (0.1, 0.9),                                 # m : 0.1 ≤ m ≤ 0.9
+    (6, 13),                                    # ω : 6 ≤ ω ≤ 13
+]
+
+MAX_SEARCHES = 25
+
+lppls_model = lppls.LPPLS(use_ln=True, observations=observations)
+
+tc, m, w, a, b, c1, c2 = lppls_model.fit(observations, MAX_SEARCHES, search_bounds, minimizer='Nelder-Mead')
+
+lppls_model.plot_fit(tc, m, w, observations)
+
+# should give a plot like the following...
+
 ```
 
 ## References
