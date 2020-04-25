@@ -70,9 +70,9 @@ search_bounds = [
 
 MAX_SEARCHES = 25
 
-lppls_model = lppls.LPPLS(use_ln=True, observations=observations)
+lppls_model = lppls.LPPLS(use_ln=False, observations=observations)
 
-tc, m, w, a, b, c1, c2 = lppls_model.fit(observations, MAX_SEARCHES, search_bounds, minimizer='Nelder-Mead')
+tc, m, w, a, b, c = lppls_model.fit(observations, MAX_SEARCHES, search_bounds, minimizer='Nelder-Mead')
 
 lppls_model.plot_fit(tc, m, w, observations)
 

@@ -155,10 +155,11 @@ class LPPLS(object):
         ])
 
         try:
-            # product = linalg.solve(matrix_1, matrix_2)
-            # return [i[0] for i in product]
-            inverse = np.linalg.pinv(matrix_1)
-            product = inverse * matrix_2
+            product = linalg.solve(matrix_1, matrix_2)
+            return [i[0] for i in product]
+
+            # inverse = np.linalg.pinv(matrix_1)
+            # product = inverse * matrix_2
 
             return product
 
