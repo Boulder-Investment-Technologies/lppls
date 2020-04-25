@@ -50,36 +50,30 @@ from datetime import datetime
 from lppls import lppls
 import numpy as np
 import pandas as pd
-
+%matplotlib inline
 SECONDS_IN_A_MONTH = 2.628e+6
 
-data = pd.read_csv('data/sp500.csv', index_col='Date')
-
+data = pd.read_csv('data/sp500.csv', index_col='Date', parse_dates=True)
 timestamp = [datetime.timestamp(dt) for dt in data.index]
-price = [p for p in data['Adj Close']]
+price = [np.log(p) for p in data['Adj Close']]
+first_ts = timestamp[0]
 last_ts = timestamp[-1]
-
+x_seconds = (last_ts - first_ts) * 0.2
 observations = np.array([timestamp, price])
-
 # set limits for non-linear params
 search_bounds = [
-    (last_ts, last_ts + SECONDS_IN_A_MONTH),    # Critical Time 
+    (last_ts - x_seconds, last_ts + x_seconds), # Critical Time 
     (0.1, 0.9),                                 # m : 0.1 ≤ m ≤ 0.9
     (6, 13),                                    # ω : 6 ≤ ω ≤ 13
 ]
-
 MAX_SEARCHES = 25
-
-lppls_model = lppls.LPPLS(use_ln=False, observations=observations)
-
+lppls_model = lppls.LPPLS(use_ln=True, observations=observations)
 tc, m, w, a, b, c = lppls_model.fit(observations, MAX_SEARCHES, search_bounds, minimizer='Nelder-Mead')
-
 lppls_model.plot_fit(tc, m, w, observations)
-
 # should give a plot like the following...
 ```
 
-![LPPLS Fit to the S&P500 Dataset](img/sp500_lppls_fit.png)
+![LPPLS Fit to the S&P500 Dataset](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/sp500_lppls_fit.png)
 
 ## References
  - Filimonov, V. and Sornette, D. A Stable and Robust Calibration Scheme of the Log-Periodic Power Law Model. Physica A: Statistical Mechanics and its Applications. 2013

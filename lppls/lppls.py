@@ -99,10 +99,10 @@ class LPPLS(object):
 
         lin_vals = self.matrix_equation(tc, m, w, data_series)
 
-        a = lin_vals[0]
-        b = lin_vals[1]
-        c1 = lin_vals[2]
-        c2 = lin_vals[3]
+        a = float(lin_vals[0])
+        b = float(lin_vals[1])
+        c1 = float(lin_vals[2])
+        c2 = float(lin_vals[3])
 
         delta = [self.lppls(t, tc, m, w, a, b, c1, c2) for t in data_series[0]]
         delta = np.subtract(delta, data_series[1])
@@ -155,11 +155,11 @@ class LPPLS(object):
         ])
 
         try:
-            product = linalg.solve(matrix_1, matrix_2)
-            return [i[0] for i in product]
+            # product = linalg.solve(matrix_1, matrix_2)
+            # return [i[0] for i in product]
 
-            # inverse = np.linalg.pinv(matrix_1)
-            # product = inverse * matrix_2
+            inverse = np.linalg.pinv(matrix_1)
+            product = inverse * matrix_2
 
             return product
 
@@ -367,10 +367,10 @@ class LPPLS(object):
                     # calculate the linear vals again...
                     lin_vals = self.matrix_equation(tc, m, w, observations)
 
-                    a = lin_vals[0]
-                    b = lin_vals[1]
-                    c1 = lin_vals[2]
-                    c2 = lin_vals[3]
+                    a = float(lin_vals[0])
+                    b = float(lin_vals[1])
+                    c1 = float(lin_vals[2])
+                    c2 = float(lin_vals[3])
 
                     c = (c1 ** 2 + c2 ** 2) ** (0.5)
 
@@ -395,10 +395,10 @@ class LPPLS(object):
         """
         lin_vals = self.matrix_equation(tc, m, w, observations)
 
-        a = lin_vals[0]
-        b = lin_vals[1]
-        c1 = lin_vals[2]
-        c2 = lin_vals[3]
+        a = float(lin_vals[0])
+        b = float(lin_vals[1])
+        c1 = float(lin_vals[2])
+        c2 = float(lin_vals[3])
         lppls_fit = [self.lppls(t, tc, m, w, a, b, c1, c2) for t in observations[0]]
         original_observations = np.log(observations[1]) if self.use_ln else observations[1]
 
