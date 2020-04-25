@@ -51,25 +51,47 @@ from lppls import lppls
 import numpy as np
 import pandas as pd
 %matplotlib inline
-SECONDS_IN_A_MONTH = 2.628e+6
 
+# read example dataset into df 
 data = pd.read_csv('data/sp500.csv', index_col='Date', parse_dates=True)
+
+# convert index col to list of timestamps
 timestamp = [datetime.timestamp(dt) for dt in data.index]
-price = [np.log(p) for p in data['Adj Close']]
+
+# create list of observation data, in this case, 
+# daily adjusted close prices of the S&P 500
+price = [p for p in data['Adj Close']]
+
+# create Mx2 matrix (expected format for LPPLS observations)
+observations = np.array([timestamp, price])
+
+# create reasonable bounds for critical time initialization
 first_ts = timestamp[0]
 last_ts = timestamp[-1]
-x_seconds = (last_ts - first_ts) * 0.2
-observations = np.array([timestamp, price])
-# set limits for non-linear params
-search_bounds = [
-    (last_ts - x_seconds, last_ts + x_seconds), # Critical Time 
-    (0.1, 0.9),                                 # m : 0.1 ≤ m ≤ 0.9
-    (6, 13),                                    # ω : 6 ≤ ω ≤ 13
+pct_delta = (last_ts - first_ts) * 0.20
+tc_init_min = last_ts - pct_delta
+tc_init_max = last_ts + pct_delta
+
+# set random initialization limits for non-linear params
+init_limits = [
+    (tc_init_min, tc_init_max), # tc : Critical Time 
+    (0.1, 0.9),                 # m : 0.1 ≤ m ≤ 0.9
+    (6, 13),                    # ω : 6 ≤ ω ≤ 13
 ]
+
+# set the max number for searches to perfrom before giving-up
+# the literature suggests 25
 MAX_SEARCHES = 25
+
+# instantiate a new LPPLS model with the S&P 500 dataset
 lppls_model = lppls.LPPLS(use_ln=True, observations=observations)
-tc, m, w, a, b, c = lppls_model.fit(observations, MAX_SEARCHES, search_bounds, minimizer='Nelder-Mead')
+
+# fit the model to the data and get back the params
+tc, m, w, a, b, c = lppls_model.fit(observations, MAX_SEARCHES, init_limits, minimizer='Nelder-Mead')
+
+# visualize the fit
 lppls_model.plot_fit(tc, m, w, observations)
+
 # should give a plot like the following...
 ```
 

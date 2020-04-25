@@ -325,12 +325,12 @@ class LPPLS(object):
     #         'symbol': symbol,
     #     }
 
-    def fit(self, observations, max_searches, search_bounds, minimizer='Nelder-Mead'):
+    def fit(self, observations, max_searches, init_limits, minimizer='Nelder-Mead'):
         """
         Args:
             observations (Mx2 numpy array): the observed data
             max_searches (int): The maxi amount of searches to perform before giving up. The literature suggests 25
-            search_bounds (list): random initialize bounds for tc, m, w. Should be formatted as a list of tuples in the order: [(tc_min, tc_max), (m_min, m_max), (w_min, w_max)].
+            init_limits (list): random initialize bounds for tc, m, w. Should be formatted as a list of tuples in the order: [(tc_min, tc_max), (m_min, m_max), (w_min, w_max)].
             minimizer (str): See list of valid methods to pass to scipy.optimize.minimize: https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html#scipy.optimize.minimize
 
         Returns:
@@ -342,7 +342,7 @@ class LPPLS(object):
         while search_count < max_searches:
 
             # randomly choose vals within bounds for non-linear params
-            non_lin_vals = [random.uniform(a[0], a[1]) for a in search_bounds]
+            non_lin_vals = [random.uniform(a[0], a[1]) for a in init_limits]
 
             tc = non_lin_vals[0]
             m = non_lin_vals[1]
