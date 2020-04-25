@@ -1,4 +1,5 @@
-# Log Periodic Power Law Singularity (LPPLS) Model 
+![PyPI 📦   ](https://github.com/Boulder-Investment-Technologies/lppls/workflows/PyPI%20%F0%9F%93%A6%20%20%20/badge.svg)
+#Log Periodic Power Law Singularity (LPPLS) Model 
 `lppls` is a Python module for fitting the LPPLS model to data.
 
 
@@ -51,24 +52,24 @@ import pandas as pd
 %matplotlib inline
 
 # read example dataset into df 
-data = pd.read_csv('/Users/joshnielsen/research/learning-lppl/data/sp500.csv', index_col='Date')
+data = pd.read_csv('data/sp500.csv', index_col='Date')
 
-# convert index col to list of timestamps
-timestamp = np.linspace(0, len(data)-1, len(data))
+# convert index col to evenly spaced numbers over a specified interval
+time = np.linspace(0, len(data)-1, len(data))
 
 # create list of observation data, in this case, 
 # daily adjusted close prices of the S&P 500
 price = [p for p in data['Adj Close']]
 
 # create Mx2 matrix (expected format for LPPLS observations)
-observations = np.array([timestamp, price])
+observations = np.array([time, price])
 
 # create reasonable bounds for critical time initialization
-first_ts = timestamp[0]
-last_ts = timestamp[-1]
-pct_delta = (last_ts - first_ts) * 0.20
-tc_init_min = last_ts - pct_delta
-tc_init_max = last_ts + pct_delta
+first = time[0]
+last = time[-1]
+pct_delta = (last - first) * 0.20
+tc_init_min = last - pct_delta
+tc_init_max = last + pct_delta
 
 # set random initialization limits for non-linear params
 init_limits = [
@@ -77,7 +78,7 @@ init_limits = [
     (6, 13),                    # ω : 6 ≤ ω ≤ 13
 ]
 
-# set the max number for searches to perfrom before giving-up
+# set the max number for searches to perform before giving-up
 # the literature suggests 25
 MAX_SEARCHES = 25
 
