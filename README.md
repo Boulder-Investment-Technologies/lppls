@@ -78,8 +78,9 @@ tc, m, w, a, b, c1, c2 = lppls_model.fit(observations, MAX_SEARCHES, search_boun
 lppls_model.plot_fit(tc, m, w, observations)
 
 # should give a plot like the following...
-
 ```
+
+![LPPLS Fit to the S&P500 Dataset]('img/sp500_lppls_fit.png')
 
 ## References
  - Filimonov, V. and Sornette, D. A Stable and Robust Calibration Scheme of the Log-Periodic Power Law Model. Physica A: Statistical Mechanics and its Applications. 2013
