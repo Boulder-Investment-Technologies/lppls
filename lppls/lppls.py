@@ -155,8 +155,12 @@ class LPPLS(object):
         ])
 
         try:
-            product = linalg.solve(matrix_1, matrix_2)
-            return [i[0] for i in product]
+            # product = linalg.solve(matrix_1, matrix_2)
+            # return [i[0] for i in product]
+            inverse = np.linalg.pinv(matrix_1)
+            product = inverse * matrix_2
+
+            return product
 
         except Exception as e:
             print(e)
@@ -372,7 +376,6 @@ class LPPLS(object):
                     return tc, m, w, a, b, c
 
                 else:
-                    print('cofs not successful failed')
                     search_count += 1
             except Exception as e:
                 print('minimize failed: {}'.format(e))
@@ -403,5 +406,5 @@ class LPPLS(object):
             'LPPLS Fit': lppls_fit,
             'Observations': original_observations,
         })
-        data = data.set_index('Date')
+        data = data.set_index('Time')
         data.plot(figsize=(14, 8))
