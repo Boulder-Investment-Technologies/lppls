@@ -1,5 +1,6 @@
 dist
 lppls.egg-info/
+__pycache__/
 
 .idea
 .DS_Store
