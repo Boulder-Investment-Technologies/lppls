@@ -8,20 +8,20 @@ The LPPLS model provides a flexible framework to detect bubbles and predict regi
 
 Here is the model:
 
-<img src="https://latex.codecogs.com/svg.latex?E[\text{ln&space;}p(t)]=A+B(t_c-t)^m&space;+C(t_c-t)^m&space;cos(\omega&space;ln(t_c-t)-\phi)" title="LPPLS Model" />
+![LPPLS Model](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/latex/LPPLS_Model.svg)
 
   where:
 
-  - <img src="https://latex.codecogs.com/svg.latex?E[\text{ln&space;}p(t)]&space;:=" title="Expected Log Price" /> expected log price at the date of the termination of the bubble
-  - <img src="https://latex.codecogs.com/svg.latex?t_c&space;:=" title="Critcal Time" /> critical time (date of termination of the bubble and transition in a new regime) 
-  - <img src="https://latex.codecogs.com/svg.latex?A&space;:=" title="A" /> expected log price at the peak when the end of the bubble is reached at <img src="https://latex.codecogs.com/svg.latex?t_c" title="Critcal Time" />
-  - <img src="https://latex.codecogs.com/svg.latex?B&space;:=" title="B" /> amplitude of the power law acceleration
-  - <img src="https://latex.codecogs.com/svg.latex?C&space;:=" title="C" /> amplitude of the log-periodic oscillations
-  - <img src="https://latex.codecogs.com/svg.latex?m&space;:=" title="m" /> degree of the super exponential growth
-  - <img src="https://latex.codecogs.com/svg.latex?\omega&space;:=" title="Omega" /> scaling ratio of the temporal hierarchy of oscillations
-  - <img src="https://latex.codecogs.com/svg.latex?\phi&space;:=" title="Phi" /> time scale of the oscillations
+  - ![Expected Log Price](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/latex/Expected_Log_Price.svg) ![Colon Equals](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/latex/coloneq.svg) expected log price at the date of the termination of the bubble
+  - ![Critical Time](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/latex/Critical_Time.svg) ![Colon Equals](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/latex/coloneq.svg) critical time (date of termination of the bubble and transition in a new regime) 
+  - ![A](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/latex/A.svg) ![Colon Equals](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/latex/coloneq.svg) expected log price at the peak when the end of the bubble is reached at <img src="https://latex.codecogs.com/svg.latex?t_c" title="Critcal Time" />
+  - ![B](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/latex/B.svg) ![Colon Equals](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/latex/coloneq.svg) amplitude of the power law acceleration
+  - ![C](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/latex/C.svg) ![Colon Equals](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/latex/coloneq.svg) amplitude of the log-periodic oscillations
+  - ![m](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/latex/m.svg) ![Colon Equals](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/latex/coloneq.svg) degree of the super exponential growth
+  - ![omega](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/latex/omega.svg) ![Colon Equals](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/latex/coloneq.svg) scaling ratio of the temporal hierarchy of oscillations
+  - ![phi](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/latex/phi.svg) ![Colon Equals](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/latex/coloneq.svg) time scale of the oscillations
     
-The model has three components representing a bubble. The first, <img src="https://latex.codecogs.com/svg.latex?A+B(t_c-t)^m" title="LPPLS Term 1" />, handles the hyperbolic power law. For <img src="https://latex.codecogs.com/svg.latex?m<1" title="M less than 1" /> when the price growth becomes unsustainable, and at <img src="https://latex.codecogs.com/svg.latex?t_c" title="Critcal Time" /> the growth rate becomes infinite. The second term, <img src="https://latex.codecogs.com/svg.latex?C(t_c-t)^m" title="LPPLS Term 2" />, controls the amplitude of the oscillations. It drops to zero at the critical time <img src="https://latex.codecogs.com/svg.latex?t_c" title="Critcal Time" />. The third term, <img src="https://latex.codecogs.com/svg.latex?cos(\omega&space;ln(t_c-t)-\phi)" title="LPPLS Term 3" />, models the frequency of the osciallations. They become infinite at <img src="https://latex.codecogs.com/svg.latex?t_c" title="Critcal Time" />.
+The model has three components representing a bubble. The first, ![LPPLS Term 1](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/latex/LPPLS_Term_1.svg), handles the hyperbolic power law. For ![m](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/latex/m.svg) < 1 when the price growth becomes unsustainable, and at ![Critical Time](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/latex/Critical_Time.svg) the growth rate becomes infinite. The second term, ![LPPLS Term 2](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/latex/LPPLS_Term_2.svg), controls the amplitude of the oscillations. It drops to zero at the critical time ![Critical Time](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/latex/Critical_Time.svg). The third term, ![LPPLS Term 3](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/latex/LPPLS_Term_3.svg), models the frequency of the osciallations. They become infinite at ![Critical Time](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/latex/Critical_Time.svg).
 
 ## Important links
  - Official source code repo: https://github.com/Boulder-Investment-Technologies/lppls
@@ -32,11 +32,11 @@ The model has three components representing a bubble. The first, <img src="https
 Dependencies
 
 `lppls` requires:
+ - Matplotlib (>= 3.1.1)
+ - NumPy (>= 1.17.0)
  - Pandas (>= 0.25.0)
  - Python (>= 3.6)
- - NumPy (>= 1.17.0)
  - SciPy (>= 1.3.0)
- - Matplotlib (>= 3.1.1)
 
 User installation
 ```
