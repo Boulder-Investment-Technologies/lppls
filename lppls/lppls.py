@@ -438,7 +438,7 @@ class LPPLS(object):
         if path_out:
             fig.savefig(path_out)
 
-    def plot_fit(self, observations, tc, m, w, ):
+    def plot_fit(self, observations, tc, m, w):
         """
         Args:
             tc (float): predicted critical time
@@ -448,7 +448,7 @@ class LPPLS(object):
         Returns:
             nothing, should plot the fit
         """
-        lin_vals = self.matrix_equation(tc, m, w, observations)
+        lin_vals = self.matrix_equation(observations, tc, m, w)
 
         a = float(lin_vals[0])
         b = float(lin_vals[1])
@@ -517,10 +517,18 @@ class LPPLS(object):
             t_len = len(obs_shrinking_slice)
             # filtering conditions
             # @TODO - make filtering conditions configurable
-            tc_in_range = t_len - (t_len * 0.05) < tc < t_len + (t_len * 0.1)
+
+            first = obs_shrinking_slice[0][0]
+            last = obs_shrinking_slice[0][-1]
+            pct_delta_05 = (last - first) * 0.05
+            pct_delta_1 = (last - first) * 0.1
+            tc_init_min = last - pct_delta_05
+            tc_init_max = last + pct_delta_1
+
+            tc_in_range = t_len - (tc_init_min) < tc < t_len + (tc_init_max)
             m_in_range = 0.01 < m < 1.2
             w_in_range = 2 < w < 25
-            n_oscillation = ((w / 2) * np.log(abs((tc - t_first) / t_len))) > 2.5
+            n_oscillation = ((w / 2) * np.log(abs((tc - first) / (last - first)))) > 2.5
             # for bubble end flag
             damping_bef = (m * abs(b)) / (w * abs(c)) > 0.8
             # for bubble early warning
@@ -536,13 +544,12 @@ class LPPLS(object):
             else:
                 bew = False
 
-            # @TODO you need to take the percent change.
-            median = stats.median(obs_shrinking_slice[1, :])
+            median = stats.median(pd.Series(obs_shrinking_slice[1, :]).pct_change().cumsum())
             median_sign = 1 if median > 0 else -1
 
             cofs.append({
                 'tc': tc,
-                'm:': m,
+                'm': m,
                 'w': w,
                 'a': a,
                 'b': b,
