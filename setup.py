@@ -13,4 +13,7 @@ setuptools.setup(name='lppls',
       long_description_content_type='text/markdown',
       url='https://github.com/Boulder-Investment-Technologies/lppls',
       python_requires='>=3.6',
-      zip_safe=False)
+      zip_safe=False,
+      include_package_data=True,
+      package_data={'': ['data/*.csv']},
+)

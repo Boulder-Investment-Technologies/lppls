@@ -45,13 +45,13 @@ pip install -U lppls
 
 ## Example Use
 ```python
-from lppls import lppls
+from lppls import lppls, data_loader
 import numpy as np
 import pandas as pd
 %matplotlib inline
 
 # read example dataset into df 
-data = pd.read_csv('/Users/joshnielsen/projects/lppls/data/sp500.csv', index_col='Date')
+data = data_loader.sp500()
 
 # convert index col to evenly spaced numbers over a specified interval
 time = np.linspace(0, len(data)-1, len(data))
