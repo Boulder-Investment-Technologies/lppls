@@ -1,10 +1,12 @@
 import multiprocessing
+from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 import random
 from scipy.optimize import minimize
-from scipy import linalg
+# from scipy import linalg
 import statistics as stats
+
 
 
 class LPPLS(object):
@@ -17,20 +19,6 @@ class LPPLS(object):
         """
         self.use_ln = use_ln
         self.observations = observations
-        # self.securities = securities
-
-    # def fetch_indicators(self, upper_bound, lower_bound, interval, num_workers, csv=False):
-    #     pool = multiprocessing.Pool(processes=num_workers)
-    #     result = pool.map(self.compute_ds_lppls_confidence,
-    #                       [(self.observations[symbol].iloc[-upper_bound:], symbol, upper_bound, lower_bound, interval) \
-    #                        for symbol in self.securities]
-    #                       )
-    #     pool.close()
-    #     results_df = pd.DataFrame(result)
-    #     if csv:
-    #         results_df.to_csv(f'{self.observations.iloc[-1, :].index.values}')
-    #     else:
-    #         return results_df
 
     # matrix helpers
     def _yi(self, price_series):
@@ -95,49 +83,50 @@ class LPPLS(object):
         m = x[1]
         w = x[2]
 
-        data_series = args[0]
+        obs = args[0]
+        # print('shape: {}'.format(obs.shape))
 
-        lin_vals = self.matrix_equation(tc, m, w, data_series)
+        lin_vals = self.matrix_equation(obs, tc, m, w)
 
         a = float(lin_vals[0])
         b = float(lin_vals[1])
         c1 = float(lin_vals[2])
         c2 = float(lin_vals[3])
 
-        delta = [self.lppls(t, tc, m, w, a, b, c1, c2) for t in data_series[0]]
-        delta = np.subtract(delta, data_series[1])
+        delta = [self.lppls(t, tc, m, w, a, b, c1, c2) for t in obs[0, :]]
+        delta = np.subtract(delta, obs[1, :])
         delta = np.power(delta, 2)
 
         return np.sum(delta)
 
-    def matrix_equation(self, tc, m, w, observations):
+    def matrix_equation(self, observations, tc, m, w):
         '''
         solve the matrix equation
         '''
-        time_series = observations[0]
-        price_series = observations[1]
-        N = len(price_series)
+        time = observations[0, :]
+        obs = observations[1, :]
+        N = len(obs)
 
         # --------------------------------
-        fi = sum(self._fi(tc, m, time_series))
-        gi = sum(self._gi(tc, m, w, time_series))
-        hi = sum(self._hi(tc, m, w, time_series))
+        fi = sum(self._fi(tc, m, time))
+        gi = sum(self._gi(tc, m, w, time))
+        hi = sum(self._hi(tc, m, w, time))
 
         # --------------------------------
-        fi_pow_2 = sum(self._fi_pow_2(tc, m, time_series))
-        gi_pow_2 = sum(self._gi_pow_2(tc, m, w, time_series))
-        hi_pow_2 = sum(self._hi_pow_2(tc, m, w, time_series))
+        fi_pow_2 = sum(self._fi_pow_2(tc, m, time))
+        gi_pow_2 = sum(self._gi_pow_2(tc, m, w, time))
+        hi_pow_2 = sum(self._hi_pow_2(tc, m, w, time))
 
         # --------------------------------
-        figi = sum(self._figi(tc, m, w, time_series))
-        fihi = sum(self._fihi(tc, m, w, time_series))
-        gihi = sum(self._gihi(tc, m, w, time_series))
+        figi = sum(self._figi(tc, m, w, time))
+        fihi = sum(self._fihi(tc, m, w, time))
+        gihi = sum(self._gihi(tc, m, w, time))
 
         # --------------------------------
-        yi = sum(self._yi(price_series))
-        yifi = sum(self._yifi(tc, m, time_series, price_series))
-        yigi = sum(self._yigi(tc, m, w, time_series, price_series))
-        yihi = sum(self._yihi(tc, m, w, time_series, price_series))
+        yi = sum(self._yi(obs))
+        yifi = sum(self._yifi(tc, m, time, obs))
+        yigi = sum(self._yigi(tc, m, w, time, obs))
+        yihi = sum(self._yihi(tc, m, w, time, obs))
 
         # --------------------------------
         matrix_1 = np.matrix([
@@ -160,177 +149,21 @@ class LPPLS(object):
 
             inverse = np.linalg.pinv(matrix_1)
             product = inverse * matrix_2
-
             return product
 
         except Exception as e:
             print(e)
 
-    # def compute_ds_lppls_confidence(self, args, minimizer='Nelder-Mead'):
-    #     """
-    #     Parameters:
-    #     -----------
-    #     args : list
-    #         df : pd.Series
-    #             prices
-    #         symbol : str
-    #             security symbol
-    #         upperbound : int
-    #             126 # ~6 months (in trading days)
-    #         lowerbound : int
-    #             21 # ~1 month (in trading days)
-    #         interval : int
-    #             5
-    #     """
-    #     df, symbol, upperbound, lowerbound, interval = args
-    #
-    #     df2 = pd.DataFrame(df).tail(upperbound).copy()
-    #
-    #     ds_lppls = []
-    #
-    #     number_of_fitting_windows = (upperbound - lowerbound) // interval
-    #
-    #     for i in range(number_of_fitting_windows):
-    #
-    #         tLen = upperbound - (i * interval)
-    #         trading_days_data = df.tail(tLen)
-    #         time = np.linspace(0, tLen - 1, tLen)
-    #         price = np.array([trading_days_data[i] for i in range(len(trading_days_data))])
-    #         data_series = np.array([time, price])
-    #
-    #         MAX_SEARCHES = 5
-    #         SEARCH_COUNT = 0
-    #
-    #         # set limits for non-linear params
-    #         bounds = [
-    #             (tLen - (tLen * 0.2), tLen + (tLen * 0.2)),  # Critical Time + or - .2
-    #             (0.1, 0.9),  # m : 0.1 ≤ m ≤ 0.9
-    #             (6, 13),  # ω : 6 ≤ ω ≤ 13
-    #         ]
-    #
-    #         # find bubbles
-    #         while SEARCH_COUNT < MAX_SEARCHES:
-    #
-    #             # randomly choose vals for non-linear params
-    #             non_lin_vals = [random.uniform(a[0], a[1]) for a in bounds]
-    #
-    #             tc = non_lin_vals[0]
-    #             m = non_lin_vals[1]
-    #             w = non_lin_vals[2]
-    #
-    #             # params to pass to scipy.optimize
-    #             seed = np.array([tc, m, w])
-    #
-    #             # scipy optimize minimize
-    #             try:
-    #                 # Nelder-Mead
-    #                 cofs = minimize(
-    #                     args=(data_series, bounds),
-    #                     fun=self.func_restricted,
-    #                     method=minimizer,
-    #                     options={
-    #                         'adaptive': True
-    #                     },
-    #                     x0=seed
-    #                 )
-    #
-    #                 if cofs.success:
-    #                     # print('minimize ran succsessfully in {} search(es)'.format(SEARCH_COUNT+1))
-    #                     # determine if it falls in range:
-    #
-    #                     tc = cofs.x[0]
-    #                     m = cofs.x[1]
-    #                     w = cofs.x[2]
-    #
-    #                     # calculate the linear vals again...
-    #                     lin_vals = self.matrix_equation(tc, m, w, data_series)
-    #
-    #                     a = lin_vals[0]
-    #                     b = lin_vals[1]
-    #                     c1 = lin_vals[2]
-    #                     c2 = lin_vals[3]
-    #
-    #                     c = (c1 ** 2 + c2 ** 2) ** (0.5)
-    #
-    #                     # filtering conditions
-    #                     tc_in_range = tLen - (tLen * 0.05) < tc < tLen + (tLen * 0.1)
-    #                     m_in_range = 0.01 < m < 1.2
-    #                     w_in_range = 2 < w < 25
-    #                     n_oscillation = ((w / 2) * np.log(abs((tc - (i * 5)) / (tLen)))) > 2.5
-    #                     # for bubble end flag
-    #                     damping_bef = (m * abs(b)) / (w * abs(c)) > 0.8
-    #                     # for bubble early warning
-    #                     damping_bew = (m * abs(b)) / (w * abs(c)) > 0.0
-    #
-    #                     if (tc_in_range and m_in_range and w_in_range and n_oscillation and damping_bef):
-    #                         ds_lppls_confidence_bef = True
-    #                     else:
-    #                         ds_lppls_confidence_bef = False
-    #
-    #                     if (tc_in_range and m_in_range and w_in_range and n_oscillation and damping_bew):
-    #                         ds_lppls_confidence_bew = True
-    #                     else:
-    #                         ds_lppls_confidence_bew = False
-    #
-    #                     ds_lppls.append({symbol: {
-    #                         'ds_lppls_confidence_bef': ds_lppls_confidence_bef,
-    #                         'ds_lppls_confidence_bew': ds_lppls_confidence_bew,
-    #                         'cof': cofs.x,
-    #                         'max_searches_exceeded': False
-    #                     }})
-    #                     break
-    #
-    #                 else:
-    #                     SEARCH_COUNT += 1
-    #                     # print('minimize failed to find a solution, trying again')
-    #
-    #             except Exception as e:
-    #                 print('minimize failed: {}'.format(e))
-    #                 SEARCH_COUNT += 1
-    #
-    #         if SEARCH_COUNT >= MAX_SEARCHES:
-    #             # no solution found in 5 tries, so just add this and move one
-    #             # print('minimize failed in allotted attempts (5)')
-    #             ds_lppls.append({symbol: {
-    #                 'ds_lppls_confidence_bef': False,
-    #                 'ds_lppls_confidence_bew': False,
-    #                 'cof': None,
-    #                 'max_searches_exceeded': True
-    #             }})
-    #
-    #     # calculate the actual ds lppls confidence value for end flag and early warning
-    #     true_count_bef = 0
-    #     true_count_bew = 0
-    #     # total_count = len(ds_lppls)
-    #     for i in ds_lppls:
-    #         if i[symbol]['ds_lppls_confidence_bef'] == True:
-    #             true_count_bef += 1
-    #         if i[symbol]['ds_lppls_confidence_bew'] == True:
-    #             true_count_bew += 1
-    #
-    #     ds_lppls_confidence_bef_val = true_count_bef / number_of_fitting_windows
-    #     ds_lppls_confidence_bew_val = true_count_bew / number_of_fitting_windows
-    #
-    #     # find the sign of the median of cumulative returns since the time t1
-    #     df2['ret'] = df2[symbol].pct_change()
-    #     df2['cum_ret'] = df2['ret'].cumsum()
-    #     median = stats.median(df2['cum_ret'].tolist())
-    #     median_sign = 1 if median > 0 else -1
-    #
-    #     return {
-    #         'val_bef': ds_lppls_confidence_bef_val * median_sign,
-    #         'val_bew': ds_lppls_confidence_bew_val * median_sign,
-    #         'date': df.tail(1).index.values[0],
-    #         'price': df.tail(1).values[0],
-    #         'symbol': symbol,
-    #     }
+        return np.array([0,
+                         0,
+                         0,
+                         0])
 
-    def fit(self, observations, max_searches, init_limits, minimizer='Nelder-Mead'):
+    def fit(self, observations, max_searches, minimizer='Nelder-Mead'):
         """
         Args:
             observations (Mx2 numpy array): the observed data
             max_searches (int): The maxi amount of searches to perform before giving up. The literature suggests 25
-            init_limits (list): random initialize bounds for tc, m, w. Should be formatted as a list of tuples in the order: [(tc_min, tc_max), (m_min, m_max), (w_min, w_max)].
             minimizer (str): See list of valid methods to pass to scipy.optimize.minimize: https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html#scipy.optimize.minimize
 
         Returns:
@@ -340,6 +173,15 @@ class LPPLS(object):
 
         # find bubble
         while search_count < max_searches:
+
+            tc_init_min, tc_init_max = self._get_tc_bounds(observations, 0.20, 0.20)
+
+            # set random initialization limits for non-linear params
+            init_limits = [
+                (tc_init_min, tc_init_max),  # tc : Critical Time
+                (0.1, 0.9),                  # m : 0.1 ≤ m ≤ 0.9
+                (6, 13),                     # ω : 6 ≤ ω ≤ 13
+            ]
 
             # randomly choose vals within bounds for non-linear params
             non_lin_vals = [random.uniform(a[0], a[1]) for a in init_limits]
@@ -365,15 +207,16 @@ class LPPLS(object):
                     w = cofs.x[2]
 
                     # calculate the linear vals again...
-                    lin_vals = self.matrix_equation(tc, m, w, observations)
+                    lin_vals = self.matrix_equation(observations, tc, m, w)
 
                     a = float(lin_vals[0])
                     b = float(lin_vals[1])
                     c1 = float(lin_vals[2])
                     c2 = float(lin_vals[3])
 
-                    c = (c1 ** 2 + c2 ** 2) ** (0.5)
+                    c = (c1 ** 2 + c2 ** 2) ** 0.5
 
+                    # @TODO save these as variables local to the class so you can access them again
                     return tc, m, w, a, b, c
 
                 else:
@@ -381,8 +224,9 @@ class LPPLS(object):
             except Exception as e:
                 print('minimize failed: {}'.format(e))
                 search_count += 1
+        return 0, 0, 0, 0, 0, 0
 
-    def plot_fit(self, tc, m, w, observations):
+    def plot_many_fits(self, observations, tc, m, w, overlay=True, path_out=False):
         """
         Args:
             tc (float): predicted critical time
@@ -393,7 +237,55 @@ class LPPLS(object):
         Returns:
             nothing, should plot the fit
         """
-        lin_vals = self.matrix_equation(tc, m, w, observations)
+        lin_vals = self.matrix_equation(observations, tc, m, w)
+
+        a = float(lin_vals[0])
+        b = float(lin_vals[1])
+        c1 = float(lin_vals[2])
+        c2 = float(lin_vals[3])
+
+        time_subset = observations[0, :]
+        obs_subset = observations[1, :]
+        obs_subset = np.log(obs_subset) if self.use_ln else obs_subset
+
+        time_full = self.observations[0, :]
+        obs_full = self.observations[1, :]
+        obs_full = np.log(obs_full) if self.use_ln else obs_full
+
+        fig, ax1 = plt.subplots(figsize=(14, 8))
+        plt.xticks(rotation=45)
+
+        color = 'tab:blue'
+        color2 = 'tab:green'
+        color3 = 'tab:pink'
+        ax1.set_xlabel('time')
+        ax1.set_ylabel('observations')
+        ax1.plot(time_full, obs_full, color=color3)
+        t_last = time_full[-1]
+        if tc < t_last:
+            plt.axvline(x=tc)
+            lppls_fit = [self.lppls(t, tc, m, w, a, b, c1, c2) for t in time_full]
+            ax1.plot(time_full, lppls_fit, color=color)
+        else:
+            lppls_fit = [self.lppls(t, tc, m, w, a, b, c1, c2) for t in time_subset]
+            ax1.plot(time_subset, lppls_fit, color=color)
+        ax1.plot(time_subset, obs_subset, color=color2)
+        ax1.tick_params(axis='y', labelcolor=color)
+
+        if path_out:
+            fig.savefig(path_out)
+
+    def plot_fit(self, observations, tc, m, w):
+        """
+        Args:
+            tc (float): predicted critical time
+            m (float): predicted degree of super-exponential growth
+            w (float): predicted scaling ratio of the temporal hierarchy of oscillations
+            observations (Mx2 numpy array): the observed data
+        Returns:
+            nothing, should plot the fit
+        """
+        lin_vals = self.matrix_equation(observations, tc, m, w)
 
         a = float(lin_vals[0])
         b = float(lin_vals[1])
@@ -409,3 +301,103 @@ class LPPLS(object):
         })
         data = data.set_index('Time')
         data.plot(figsize=(14, 8))
+
+    def mp_compute_indicator(self, workers, window_size=80, smallest_window_size=20, increment=5, max_searches=25):
+        obs_copy = self.observations
+        obs_copy_len = len(obs_copy[0, :]) - window_size
+
+        func = self._func_compute_indicator
+        func_arg_map = [(
+            obs_copy[:, i:window_size + i],  # obs
+            i,                               # n_iter
+            window_size,                     # window_size
+            smallest_window_size,            # smallest_window_size
+            increment,                       # increment
+            max_searches                     # max_searches
+        ) for i in range(obs_copy_len)]
+
+        pool = multiprocessing.Pool(processes=workers)
+        result = pool.map(func, func_arg_map)
+        pool.close()
+
+        return result
+
+    def _func_compute_indicator(self, args):
+
+        obs, n_iter, window_size, smallest_window_size, increment, max_searches = args
+
+        n_fits = (window_size - smallest_window_size) // increment
+
+        cofs = []
+
+        # run n fits on the observation slice.
+        for j in range(n_fits):
+            obs_shrinking_slice = obs[:, j * increment:window_size + n_iter]
+
+            # fit the model to the data and get back the params
+            tc, m, w, a, b, c = self.fit(obs_shrinking_slice, max_searches, minimizer='Nelder-Mead')
+
+            t_len = len(obs_shrinking_slice)
+            # filtering conditions
+            # @TODO - make filtering conditions configurable
+
+            first = obs_shrinking_slice[0][0]
+            last = obs_shrinking_slice[0][-1]
+            tc_init_min, tc_init_max = self._get_tc_bounds(obs_shrinking_slice, 0.05, 0.10)
+
+            tc_in_range = last - tc_init_min < tc < last + tc_init_max
+            m_in_range = 0.01 < m < 1.2
+            w_in_range = 2 < w < 25
+            n_oscillation = ((w / 2) * np.log(abs((tc - first) / (last - first)))) > 2.5
+            # for bubble end flag
+            damping_bef = (m * abs(b)) / (w * abs(c)) > 0.8
+            # for bubble early warning
+            damping_bew = (m * abs(b)) / (w * abs(c)) > 0.0
+
+            if tc_in_range and m_in_range and w_in_range and n_oscillation and damping_bef:
+                bef = True
+            else:
+                bef = False
+
+            if tc_in_range and m_in_range and w_in_range and n_oscillation and damping_bew:
+                bew = True
+            else:
+                bew = False
+
+            median = stats.median(pd.Series(obs_shrinking_slice[1, :]).pct_change().cumsum())
+            median_sign = 1 if median > 0 else -1
+
+            cofs.append({
+                'tc': tc,
+                'm': m,
+                'w': w,
+                'a': a,
+                'b': b,
+                'c': c,
+                'bef': bef,
+                'bew': bew,
+                'median_sign': median_sign
+            })
+
+            # # visualize the fit
+            # self.plot_many_fit(obs_shrinking_slice, tc, m, w, overlay=True,
+            #               path_out='/Users/joshnielsen/Desktop/newfits_testing/{}-{}.png'.format(n_iter, j))
+        return cofs
+
+    def _get_tc_bounds(self, obs, lower_bound_pct, upper_bound_pct):
+        """
+        Args:
+            obs (Mx2 numpy array): the observed data
+            lower_bound_pct (float): percent of (t_2 - t_1) to use as the LOWER bound initial value for the optimization
+            upper_bound_pct (float): percent of (t_2 - t_1) to use as the UPPER bound initial value for the optimization
+        Returns:
+            tc_init_min, tc_init_max
+        """
+        t_first = obs[0, 0]
+        t_last = obs[0, -1]
+        t_delta = t_last - t_first
+        pct_delta_min = t_delta * lower_bound_pct
+        pct_delta_max = t_delta * upper_bound_pct
+        tc_init_min = t_last - pct_delta_min
+        tc_init_max = t_last + pct_delta_max
+        return tc_init_min, tc_init_max
