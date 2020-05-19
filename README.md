@@ -51,7 +51,7 @@ import pandas as pd
 %matplotlib inline
 
 # read example dataset into df 
-data = pd.read_csv('data/sp500.csv', index_col='Date')
+data = pd.read_csv('/Users/joshnielsen/projects/lppls/data/sp500.csv', index_col='Date')
 
 # convert index col to evenly spaced numbers over a specified interval
 time = np.linspace(0, len(data)-1, len(data))
@@ -63,21 +63,7 @@ price = [p for p in data['Adj Close']]
 # create Mx2 matrix (expected format for LPPLS observations)
 observations = np.array([time, price])
 
-# create reasonable bounds for critical time initialization
-first = time[0]
-last = time[-1]
-pct_delta = (last - first) * 0.20
-tc_init_min = last - pct_delta
-tc_init_max = last + pct_delta
-
-# set random initialization limits for non-linear params
-init_limits = [
-    (tc_init_min, tc_init_max), # tc : Critical Time 
-    (0.1, 0.9),                 # m : 0.1 ≤ m ≤ 0.9
-    (6, 13),                    # ω : 6 ≤ ω ≤ 13
-]
-
-# set the max number for searches to perform before giving-up
+# set the max number for searches to perfrom before giving-up
 # the literature suggests 25
 MAX_SEARCHES = 25
 
@@ -85,10 +71,10 @@ MAX_SEARCHES = 25
 lppls_model = lppls.LPPLS(use_ln=True, observations=observations)
 
 # fit the model to the data and get back the params
-tc, m, w, a, b, c = lppls_model.fit(observations, MAX_SEARCHES, init_limits, minimizer='Nelder-Mead')
+tc, m, w, a, b, c = lppls_model.fit(observations, MAX_SEARCHES, minimizer='Nelder-Mead')
 
 # visualize the fit
-lppls_model.plot_fit(tc, m, w, observations)
+lppls_model.plot_fit(observations, tc, m, w)
 
 # should give a plot like the following...
 ```
