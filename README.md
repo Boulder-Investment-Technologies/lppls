@@ -63,7 +63,7 @@ price = [p for p in data['Adj Close']]
 # create Mx2 matrix (expected format for LPPLS observations)
 observations = np.array([time, price])
 
-# set the max number for searches to perfrom before giving-up
+# set the max number for searches to perform before giving-up
 # the literature suggests 25
 MAX_SEARCHES = 25
 
