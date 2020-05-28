@@ -106,6 +106,7 @@ class LPPLS(object):
         time = observations[0, :]
         obs = observations[1, :]
         N = len(obs)
+        zeros = np.array([0, 0, 0, 0])
 
         # --------------------------------
         fi = sum(self._fi(tc, m, time))
@@ -147,17 +148,19 @@ class LPPLS(object):
             # product = linalg.solve(matrix_1, matrix_2)
             # return [i[0] for i in product]
 
-            inverse = np.linalg.pinv(matrix_1)
-            product = inverse * matrix_2
-            return product
+            matrix_1_is_not_inf_or_nan = not np.isinf(matrix_1).any() and not np.isnan(matrix_1).any()
+            matrix_2_is_not_inf_or_nan = not np.isinf(matrix_2).any() and not np.isnan(matrix_2).any()
+
+            if matrix_1_is_not_inf_or_nan and matrix_2_is_not_inf_or_nan:
+                inverse = np.linalg.pinv(matrix_1)
+                product = inverse * matrix_2
+                return product
+            return zeros
 
         except Exception as e:
-            print(e)
+            print('matrix_equation failed: {}'.format(e))
 
-        return np.array([0,
-                         0,
-                         0,
-                         0])
+        return zeros
 
     def fit(self, observations, max_searches, minimizer='Nelder-Mead'):
         """
