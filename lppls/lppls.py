@@ -152,19 +152,43 @@ class LPPLS(object):
         data = data.set_index('Time')
         data.plot(figsize=(14, 8))
 
-    def mp_compute_indicator(self, workers, window_size=80, smallest_window_size=20, increment=5, max_searches=25):
+    def mp_compute_indicator(self, workers, window_size=80, smallest_window_size=20, increment=5, max_searches=25,
+                             n_periods=5, offset=0
+                             ):
+        """
+        To calculate the confidence indicator suggested by Sornette et. alt. the LPPLS model is fit over
+        sliding windows of length from 'window_size' and 'smallest_window_size'
+        (decreased by the step size 'increment') with a fixed end date.
+
+        The maximum end date is determined by 'offset', and the number of date for which the fits are performed is
+        defined by 'n_periods'.  I.e. if a price array self.observations of length x is given, the fits required for
+        the calculation of the confidence indicator will be performed for all end dates corresponding to the array's
+        indices length(x) -1 - offset, length(x) -1 - offset - 1, ..., length(x) - 1 - offset - n_periods
+
+
+        :param workers: The number of parallel processes
+        :param window_size: The maximum size of the sliding window
+        :param smallest_window_size: The minimum size of the sliding window
+        :param increment: The step size used to increment the window size
+        :param max_searches: The maximum number of trials for the optimizer
+        :param n_periods: The maximum number of end dates for which the LPPLS fits are performed
+        :param offset: The maximum end date for which the LPPLS fits are performed
+        :return: A nested list of dictionaries containing the parameters of the LPPLS fits for a given end date.
+        """
+
+
         obs_copy = self.observations
         obs_copy_len = len(obs_copy[0, :]) - window_size
 
         func = self._func_compute_indicator
         func_arg_map = [(
             obs_copy[:, i:window_size + i],  # obs
-            i,                               # n_iter
-            window_size,                     # window_size
-            smallest_window_size,            # smallest_window_size
-            increment,                       # increment
-            max_searches                     # max_searches
-        ) for i in range(obs_copy_len)]
+            i,  # n_iter
+            window_size,  # window_size
+            smallest_window_size,  # smallest_window_size
+            increment,  # increment
+            max_searches  # max_searches
+        ) for i in range(obs_copy_len-n_periods+1-offset, obs_copy_len+1-offset)]
 
         pool = multiprocessing.Pool(processes=workers)
         result = pool.map(func, func_arg_map)
