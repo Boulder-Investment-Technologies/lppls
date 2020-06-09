@@ -199,9 +199,6 @@ class LPPLS(object):
             m_in_range = 0.01 < m < 1.2
             w_in_range = 2 < w < 25
 
-            # n_oscillation = ((w / 2) * np.log(abs((tc - first) / (last - first)))) > 2.5
-            # Use filtering conditions as implemented in the R 'bubble' package by Dean Fantazzini
-            # (https://github.com/Boulder-Investment-Technologies/lppls/issues/url)
             n_oscillation = ((w / (2 * np.pi)) * np.log(abs(tc / (tc - last)))) > 2.5
 
             # for bubble end flag
