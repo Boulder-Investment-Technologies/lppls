@@ -372,7 +372,10 @@ class LPPLS(object):
             else:
                 bew = False
 
-            median = stats.median(pd.Series(obs_shrinking_slice[1, :]).pct_change().cumsum())
+            cum_pct_change = pd.Series(obs_shrinking_slice[1, :]).pct_change().cumsum()
+
+            # Compute the median, while ignoring NaNs (pct_change introduces a NaN).
+            median = np.nanmedian(cum_pct_change)
             median_sign = 1 if median > 0 else -1
 
             cofs.append({
