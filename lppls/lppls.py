@@ -358,9 +358,9 @@ class LPPLS(object):
             n_oscillation = ((w / 2 * np.pi) * np.log(abs((tc) / (tc - last)))) > 2.5
 
             # for bubble end flag
-            damping_bef = (m * abs(b)) / (w * abs(c)) > 0.8
+            damping_bef = (m * abs(b)) / (w * abs(c)) > 0.8 if m > 0 and w > 0 else False
             # for bubble early warning
-            damping_bew = (m * abs(b)) / (w * abs(c)) > 0.0
+            damping_bew = (m * abs(b)) / (w * abs(c)) > 0.0 if m > 0 and w > 0 else False
 
             if tc_in_range and m_in_range and w_in_range and n_oscillation and damping_bef:
                 bef = True
