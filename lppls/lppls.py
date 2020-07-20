@@ -4,9 +4,6 @@ import numpy as np
 import pandas as pd
 import random
 from scipy.optimize import minimize
-# from scipy import linalg
-import statistics as stats
-
 
 
 class LPPLS(object):
@@ -387,7 +384,9 @@ class LPPLS(object):
                 'c': c,
                 'bef': bef,
                 'bew': bew,
-                'median_sign': median_sign
+                'median_sign': median_sign,
+                't1': first,
+                't2': last,
             })
 
             # # visualize the fit
