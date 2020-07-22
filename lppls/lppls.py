@@ -352,7 +352,7 @@ class LPPLS(object):
             # n_oscillation = ((w / 2) * np.log(abs((tc - first) / (last - first)))) > 2.5
             # Use filtering conditions as implemented in the R 'bubble' package by Dean Fantazzini
             # (https://github.com/Boulder-Investment-Technologies/lppls/issues/url)
-            n_oscillation = ((w / 2 * np.pi) * np.log(abs((tc) / (tc - last)))) > 2.5
+            n_oscillation = ((w / (2 * np.pi)) * np.log(abs(tc / (tc - last)))) > 2.5
 
             # for bubble end flag
             damping_bef = (m * abs(b)) / (w * abs(c)) > 0.8 if m > 0 and w > 0 else False
