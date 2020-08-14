@@ -4,3 +4,5 @@ __pycache__/
 
 .idea
 .DS_Store
+
+example.py

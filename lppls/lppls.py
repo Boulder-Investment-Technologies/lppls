@@ -12,59 +12,10 @@ class LPPLS(object):
         """
         Args:
             use_ln (bool): Whether to take the natural logarithm of the observations.
-            observations (np.array): Mx2 matrix with timestamp and observed value.
+            observations (np.array): 2xM matrix with timestamp and observed value.
         """
         self.use_ln = use_ln
         self.observations = observations
-
-    # matrix helpers
-    def _yi(self, price_series):
-        if self.use_ln:
-            return [np.log(p) for p in price_series]
-        else:
-            return [p for p in price_series]
-
-    def _fi(self, tc, m, time_series):
-        return [np.power((tc - t), m) for t in time_series]
-
-    def _gi(self, tc, m, w, time_series):
-        if self.use_ln:
-            return [np.power((tc - t), m) * np.cos(w * np.log(tc - t)) for t in time_series]
-        else:
-            return [np.power((tc - t), m) * np.cos(w * (tc - t)) for t in time_series]
-
-    def _hi(self, tc, m, w, time_series):
-        if self.use_ln:
-            return [np.power((tc - t), m) * np.sin(w * np.log(tc - t)) for t in time_series]
-        else:
-            return [np.power((tc - t), m) * np.sin(w * (tc - t)) for t in time_series]
-
-    def _fi_pow_2(self, tc, m, time_series):
-        return np.power(self._fi(tc, m, time_series), 2)
-
-    def _gi_pow_2(self, tc, m, w, time_series):
-        return np.power(self._gi(tc, m, w, time_series), 2)
-
-    def _hi_pow_2(self, tc, m, w, time_series):
-        return np.power(self._hi(tc, m, w, time_series), 2)
-
-    def _figi(self, tc, m, w, time_series):
-        return np.multiply(self._fi(tc, m, time_series), self._gi(tc, m, w, time_series))
-
-    def _fihi(self, tc, m, w, time_series):
-        return np.multiply(self._fi(tc, m, time_series), self._hi(tc, m, w, time_series))
-
-    def _gihi(self, tc, m, w, time_series):
-        return np.multiply(self._gi(tc, m, w, time_series), self._hi(tc, m, w, time_series))
-
-    def _yifi(self, tc, m, time_series, price_series):
-        return np.multiply(self._yi(price_series), self._fi(tc, m, time_series))
-
-    def _yigi(self, tc, m, w, time_series, price_series):
-        return np.multiply(self._yi(price_series), self._gi(tc, m, w, time_series))
-
-    def _yihi(self, tc, m, w, time_series, price_series):
-        return np.multiply(self._yi(price_series), self._hi(tc, m, w, time_series))
 
     def lppls(self, t, tc, m, w, a, b, c1, c2):
         if self.use_ln:
@@ -98,66 +49,18 @@ class LPPLS(object):
 
     def matrix_equation(self, observations, tc, m, w):
         '''
-        solve the matrix equation
+            Derive linear parameters in LPPLs from nonlinear ones.
         '''
-        time = observations[0, :]
-        obs = observations[1, :]
-        N = len(obs)
-        zeros = np.array([0, 0, 0, 0])
+        T = observations[0]
+        P = np.log(observations[1]) if self.use_ln else observations[1]
+        deltaT = tc - T
+        phase = np.log(deltaT) if self.use_ln else deltaT
+        fi = np.power(deltaT, m)
+        gi = fi * np.cos(w * phase)
+        hi = fi * np.sin(w * phase)
+        A = np.stack([np.ones_like(deltaT), fi, gi, hi])
 
-        # --------------------------------
-        fi = sum(self._fi(tc, m, time))
-        gi = sum(self._gi(tc, m, w, time))
-        hi = sum(self._hi(tc, m, w, time))
-
-        # --------------------------------
-        fi_pow_2 = sum(self._fi_pow_2(tc, m, time))
-        gi_pow_2 = sum(self._gi_pow_2(tc, m, w, time))
-        hi_pow_2 = sum(self._hi_pow_2(tc, m, w, time))
-
-        # --------------------------------
-        figi = sum(self._figi(tc, m, w, time))
-        fihi = sum(self._fihi(tc, m, w, time))
-        gihi = sum(self._gihi(tc, m, w, time))
-
-        # --------------------------------
-        yi = sum(self._yi(obs))
-        yifi = sum(self._yifi(tc, m, time, obs))
-        yigi = sum(self._yigi(tc, m, w, time, obs))
-        yihi = sum(self._yihi(tc, m, w, time, obs))
-
-        # --------------------------------
-        matrix_1 = np.matrix([
-            [N, fi, gi, hi],
-            [fi, fi_pow_2, figi, fihi],
-            [gi, figi, gi_pow_2, gihi],
-            [hi, fihi, gihi, hi_pow_2]
-        ])
-
-        matrix_2 = np.matrix([
-            [yi],
-            [yifi],
-            [yigi],
-            [yihi]
-        ])
-
-        try:
-            # product = linalg.solve(matrix_1, matrix_2)
-            # return [i[0] for i in product]
-
-            matrix_1_is_not_inf_or_nan = not np.isinf(matrix_1).any() and not np.isnan(matrix_1).any()
-            matrix_2_is_not_inf_or_nan = not np.isinf(matrix_2).any() and not np.isnan(matrix_2).any()
-
-            if matrix_1_is_not_inf_or_nan and matrix_2_is_not_inf_or_nan:
-                inverse = np.linalg.pinv(matrix_1)
-                product = inverse * matrix_2
-                return product
-            return zeros
-
-        except Exception as e:
-            print('matrix_equation failed: {}'.format(e))
-
-        return zeros
+        return np.linalg.lstsq(A.T, P, rcond=None)[0]
 
     def fit(self, observations, max_searches, minimizer='Nelder-Mead'):
         """
@@ -170,10 +73,8 @@ class LPPLS(object):
             tc, m, w, a, b, c1, c2
         """
         search_count = 0
-
         # find bubble
         while search_count < max_searches:
-
             tc_init_min, tc_init_max = self._get_tc_bounds(observations, 0.20, 0.20)
 
             # set random initialization limits for non-linear params
