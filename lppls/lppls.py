@@ -100,8 +100,8 @@ class LPPLS(object):
         '''
         solve the matrix equation
         '''
-        time = observations[0, :]
-        obs = observations[1, :]
+        time = observations[0]
+        obs = observations[1]
         N = len(obs)
         zeros = np.array([0, 0, 0, 0])
 
