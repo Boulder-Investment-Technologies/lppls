@@ -12,8 +12,12 @@ class LPPLS(object):
         """
         Args:
             use_ln (bool): Whether to take the natural logarithm of the observations.
-            observations (np.array): 2xM matrix with timestamp and observed value.
+            observations (np.array,pd.DataFrame): 2xM matrix with timestamp and observed value.
         """
+        assert isinstance(use_ln, bool), f'Expected use_ln to be <bool>, got :{type(use_ln)}'
+        assert isinstance(observations, (np.ndarray,pd.DataFrame)), \
+            f'Expected observations to be <pd.DataFrame> or <np.array>, got :{type(use_ln)}'
+
         self.use_ln = use_ln
         self.observations = observations
 
@@ -25,7 +29,7 @@ class LPPLS(object):
 
     def func_restricted(self, x, *args):
         '''
-        finds the least square difference
+        Finds the least square difference.
         '''
         tc = x[0]
         m = x[1]
@@ -49,7 +53,7 @@ class LPPLS(object):
 
     def matrix_equation(self, observations, tc, m, w):
         '''
-            Derive linear parameters in LPPLs from nonlinear ones.
+        Derive linear parameters in LPPLs from nonlinear ones.
         '''
         T = observations[0]
         P = np.log(observations[1]) if self.use_ln else observations[1]
