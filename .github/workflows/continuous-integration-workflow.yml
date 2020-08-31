@@ -1,12 +1,20 @@
+
 on: push
-name: on push
+name: Continuous Integration
 jobs:
-  gitHubActionForPytest:
+  githubActionForPytest:
     name: GitHub Action for pytest
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
-    - name: GitHub Action for pytest
-      uses: cclauss/GitHub-Action-for-pytest@master
-      with:
-        args: pip3 install -r sys/requirements_conda.txt && pytest
+    - uses: actions/checkout@v2
+    
+    - name: Install dependencies  
+      run: |
+        python -m pip install --upgrade pip
+        pip install setuptools wheel twine
+        python setup.py sdist bdist_wheel
+        
+    - name: Run Pytest
+      run: |
+        pip install pytest
+        pytest
