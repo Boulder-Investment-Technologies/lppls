@@ -1,0 +1,23 @@
+
+on: push
+name: Continuous Integration
+jobs:
+  githubActionForPytest:
+    name: GitHub Action for pytest
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v1
+      with:
+        python-version: '3.6'
+    - name: Install dependencies  
+      run: |
+        pip install --upgrade pip
+        pip install setuptools wheel
+        pip install -r requirements.txt
+        
+    - name: Run Pytest
+      run: |
+        pip install pytest
+        pytest
