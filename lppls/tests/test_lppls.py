@@ -8,6 +8,7 @@ import pytest
 def data():
     return data_loader.sp500()
 
+@pytest.fixture
 def lppls_model():
     """Returns a model instance with use_ln=True"""
     return lppls.LPPLS(use_ln=True, observations=data_loader.sp500())
