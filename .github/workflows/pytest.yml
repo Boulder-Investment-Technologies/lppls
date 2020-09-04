@@ -1,20 +1,23 @@
+# This workflows will run the PyTests suite
 
-on: push
-name: Continuous Integration
+name: 'PyTests'
+
+on:
+  push:
+    branches:
+      - master
+
 jobs:
-  githubActionForPytest:
-    name: GitHub Action for pytest
+  pytest:
+    name: 'PyTests'
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.6, 3.7, 3.8]
     
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python
       uses: actions/setup-python@v1
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: '3.x'
     - name: Install dependencies  
       run: |
         pip install --upgrade pip

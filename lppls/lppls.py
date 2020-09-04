@@ -8,24 +8,18 @@ from scipy.optimize import minimize
 
 class LPPLS(object):
 
-    def __init__(self, use_ln, observations):
+    def __init__(self, observations):
         """
         Args:
-            use_ln (bool): Whether to take the natural logarithm of the observations.
             observations (np.array,pd.DataFrame): 2xM matrix with timestamp and observed value.
         """
-        assert isinstance(use_ln, bool), f'Expected use_ln to be <bool>, got :{type(use_ln)}'
         assert isinstance(observations, (np.ndarray,pd.DataFrame)), \
-            f'Expected observations to be <pd.DataFrame> or <np.array>, got :{type(use_ln)}'
+            f'Expected observations to be <pd.DataFrame> or <np.array>, got :{type(observations)}'
 
-        self.use_ln = use_ln
         self.observations = observations
 
     def lppls(self, t, tc, m, w, a, b, c1, c2):
-        if self.use_ln:
-            return a + np.power(tc - t, m) * (b + ((c1 * np.cos(w * np.log(tc - t))) + (c2 * np.sin(w * np.log(tc - t)))))
-        else:
-            return a + np.power(tc - t, m) * (b + ((c1 * np.cos(w * (tc - t))) + (c2 * np.sin(w * (tc - t)))))
+        return a + np.power(tc - t, m) * (b + ((c1 * np.cos(w * (tc - t))) + (c2 * np.sin(w * (tc - t)))))
 
     def func_restricted(self, x, *args):
         '''
@@ -56,9 +50,9 @@ class LPPLS(object):
         Derive linear parameters in LPPLs from nonlinear ones.
         '''
         T = observations[0]
-        P = np.log(observations[1]) if self.use_ln else observations[1]
+        P = observations[1]
         deltaT = tc - T
-        phase = np.log(deltaT) if self.use_ln else deltaT
+        phase = deltaT
         fi = np.power(deltaT, m)
         gi = fi * np.cos(w * phase)
         hi = fi * np.sin(w * phase)
@@ -131,55 +125,6 @@ class LPPLS(object):
                 search_count += 1
         return 0, 0, 0, 0, 0, 0
 
-    def plot_many_fits(self, observations, tc, m, w, overlay=True, path_out=False):
-        """
-        Args:
-            tc (float): predicted critical time
-            m (float): predicted degree of super-exponential growth
-            w (float): predicted scaling ratio of the temporal hierarchy of oscillations
-            observations (Mx2 numpy array): the observed data
-
-        Returns:
-            nothing, should plot the fit
-        """
-        lin_vals = self.matrix_equation(observations, tc, m, w)
-
-        a = float(lin_vals[0])
-        b = float(lin_vals[1])
-        c1 = float(lin_vals[2])
-        c2 = float(lin_vals[3])
-
-        time_subset = observations[0, :]
-        obs_subset = observations[1, :]
-        obs_subset = np.log(obs_subset) if self.use_ln else obs_subset
-
-        time_full = self.observations[0, :]
-        obs_full = self.observations[1, :]
-        obs_full = np.log(obs_full) if self.use_ln else obs_full
-
-        fig, ax1 = plt.subplots(figsize=(14, 8))
-        plt.xticks(rotation=45)
-
-        color = 'tab:blue'
-        color2 = 'tab:green'
-        color3 = 'tab:pink'
-        ax1.set_xlabel('time')
-        ax1.set_ylabel('observations')
-        ax1.plot(time_full, obs_full, color=color3)
-        t_last = time_full[-1]
-        if tc < t_last:
-            plt.axvline(x=tc)
-            lppls_fit = [self.lppls(t, tc, m, w, a, b, c1, c2) for t in time_full]
-            ax1.plot(time_full, lppls_fit, color=color)
-        else:
-            lppls_fit = [self.lppls(t, tc, m, w, a, b, c1, c2) for t in time_subset]
-            ax1.plot(time_subset, lppls_fit, color=color)
-        ax1.plot(time_subset, obs_subset, color=color2)
-        ax1.tick_params(axis='y', labelcolor=color)
-
-        if path_out:
-            fig.savefig(path_out)
-
     def plot_fit(self, observations, tc, m, w):
         """
         Args:
@@ -197,7 +142,7 @@ class LPPLS(object):
         c1 = float(lin_vals[2])
         c2 = float(lin_vals[3])
         lppls_fit = [self.lppls(t, tc, m, w, a, b, c1, c2) for t in observations[0]]
-        original_observations = np.log(observations[1]) if self.use_ln else observations[1]
+        original_observations = observations[1]
 
         data = pd.DataFrame({
             'Time': observations[0],
