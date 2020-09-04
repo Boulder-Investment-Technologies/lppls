@@ -1,4 +1,5 @@
 ![PyPI 📦   ](https://github.com/Boulder-Investment-Technologies/lppls/workflows/PyPI%20%F0%9F%93%A6%20%20%20/badge.svg?branch=master)
+![PyTests](https://github.com/Boulder-Investment-Technologies/lppls/workflows/PyTests/badge.svg?branch=master)
 [![HitCount](http://hits.dwyl.com/Boulder-Investment-Technologies/lppls.svg)](http://hits.dwyl.com/Boulder-Investment-Technologies/lppls)
 
 # Log Periodic Power Law Singularity (LPPLS) Model 
@@ -62,6 +63,9 @@ time = np.linspace(0, len(data)-1, len(data))
 # daily adjusted close prices of the S&P 500
 price = [p for p in data['Adj Close']]
 
+# use log price
+price = np.log(price)
+
 # create Mx2 matrix (expected format for LPPLS observations)
 observations = np.array([time, price])
 
@@ -70,7 +74,7 @@ observations = np.array([time, price])
 MAX_SEARCHES = 25
 
 # instantiate a new LPPLS model with the S&P 500 dataset
-lppls_model = lppls.LPPLS(use_ln=True, observations=observations)
+lppls_model = lppls.LPPLS(observations=observations)
 
 # fit the model to the data and get back the params
 tc, m, w, a, b, c = lppls_model.fit(observations, MAX_SEARCHES, minimizer='Nelder-Mead')
