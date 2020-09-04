@@ -1,0 +1,27 @@
+
+on: push
+name: Continuous Integration
+jobs:
+  githubActionForPytest:
+    name: GitHub Action for pytest
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+    
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies  
+      run: |
+        pip install --upgrade pip
+        pip install setuptools wheel
+        pip install -r requirements.txt
+        
+    - name: Run Pytest
+      run: |
+        pip install pytest
+        pytest
