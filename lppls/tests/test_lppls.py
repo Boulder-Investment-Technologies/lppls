@@ -10,29 +10,15 @@ def data():
 
 @pytest.fixture
 def lppls_model():
-    """Returns a model instance with use_ln=True"""
-    return lppls.LPPLS(use_ln=True, observations=data_loader.sp500())
+    """Returns a model instance"""
+    return lppls.LPPLS(observations=data_loader.sp500())
 
 def test_lppls(data):
     # Test that the base lppls function is giving expected results.
-    lppls_model = lppls.LPPLS(use_ln=True,observations=data)
-
-    # Using ln
-    # Check integrity at period 0
-    t, tc, m, w, a, b, c1, c2 = 0.0, 1279.0429001048128, 0.2133326239108304, 11.091557842299654, 8.496823547814529,\
-                                -0.20816240802471664, 0.00478771542574161, 0.002854567990966797
-    assert 7.514469730428095 == lppls_model.lppls(t, tc, m, w, a, b, c1, c2)
-
-    # Check integrity at period 500
-    t, tc, m, w, a, b, c1, c2 = 500.0, 1267.9408517287782, 0.2782773005077447, 8.48668944887598, 8.314317740049685,\
-                                -0.10736015203099668, 0.0006372137521824459, 0.005475817732843753
-    assert 7.6306097488441615 == lppls_model.lppls(t, tc, m, w, a, b, c1, c2)
-
-    # Not using ln
-    lppls_model = lppls.LPPLS(use_ln=False, observations=data)
+    lppls_model = lppls.LPPLS(observations=data)
     # Check integrity at period 0
     t, tc, m, w, a, b, c1, c2 = 0.0, 1300.2412888852296, 0.6087189222292106, 6.344318139503496, 3034.166016949172,\
-                                - 16.041970137173486, 0.21878280136703082, - 0.14789336333436504
+                                -16.041970137173486, 0.21878280136703082, - 0.14789336333436504
     assert 1793.5438277142375 == lppls_model.lppls(t, tc, m, w, a, b, c1, c2)
 
     # Check integrity at period 500
