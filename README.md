@@ -61,10 +61,8 @@ time = np.linspace(0, len(data)-1, len(data))
 
 # create list of observation data, in this case, 
 # daily adjusted close prices of the S&P 500
-price = [p for p in data['Adj Close']]
-
 # use log price
-price = np.log(price)
+price = np.log(data['Adj Close'].values)
 
 # create Mx2 matrix (expected format for LPPLS observations)
 observations = np.array([time, price])
