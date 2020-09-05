@@ -125,12 +125,7 @@ class LPPLS(object):
             m = cofs.x[1]
             w = cofs.x[2]
 
-            lin_vals = self.matrix_equation(observations, tc, m, w)
-
-            a = float(lin_vals[0])
-            b = float(lin_vals[1])
-            c1 = float(lin_vals[2])
-            c2 = float(lin_vals[3])
+            a, b, c1, c2 = self.matrix_equation(observations, tc, m, w).astype('float').tolist()
             c = (c1 ** 2 + c2 ** 2) ** 0.5
 
             # Use sklearn format for storing fit params
@@ -150,12 +145,8 @@ class LPPLS(object):
         Returns:
             nothing, should plot the fit
         """
-        lin_vals = self.matrix_equation(observations, tc, m, w)
 
-        a = float(lin_vals[0])
-        b = float(lin_vals[1])
-        c1 = float(lin_vals[2])
-        c2 = float(lin_vals[3])
+        a, b, c1, c2 = self.matrix_equation(observations, tc, m, w).astype('float').tolist()
         lppls_fit = [self.lppls(t, tc, m, w, a, b, c1, c2) for t in observations[0]]
         original_observations = observations[1]
 
