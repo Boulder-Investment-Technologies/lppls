@@ -13,31 +13,32 @@ class LPPLS(object):
         Args:
             observations (np.array,pd.DataFrame): 2xM matrix with timestamp and observed value.
         """
-        assert isinstance(observations, (np.ndarray,pd.DataFrame)), \
-            f'Expected observations to be <pd.DataFrame> or <np.array>, got :{type(observations)}'
+        assert isinstance(observations, (np.ndarray, pd.DataFrame)), \
+            f'Expected observations to be <pd.DataFrame> or <np.ndarray>, got :{type(observations)}'
 
         self.observations = observations
+        self.coef_ = {}
 
     def lppls(self, t, tc, m, w, a, b, c1, c2):
         return a + np.power(tc - t, m) * (b + ((c1 * np.cos(w * (tc - t))) + (c2 * np.sin(w * (tc - t)))))
 
     def func_restricted(self, x, *args):
-        '''
+        """
         Finds the least square difference.
-        '''
+        See https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html
+        Args:
+            x(np.ndarray):  1-D array with shape (n,).
+            args:           Tuple of the fixed parameters needed to completely specify the function.
+        Returns:
+            (float)
+        """
+
         tc = x[0]
         m = x[1]
         w = x[2]
-
         obs = args[0]
-        # print('shape: {}'.format(obs.shape))
 
-        lin_vals = self.matrix_equation(obs, tc, m, w)
-
-        a = float(lin_vals[0])
-        b = float(lin_vals[1])
-        c1 = float(lin_vals[2])
-        c2 = float(lin_vals[3])
+        a, b, c1, c2 = self.matrix_equation(obs, tc, m, w).astype('float').tolist()
 
         delta = [self.lppls(t, tc, m, w, a, b, c1, c2) for t in obs[0, :]]
         delta = np.subtract(delta, obs[1, :])
@@ -46,9 +47,9 @@ class LPPLS(object):
         return np.sum(delta)
 
     def matrix_equation(self, observations, tc, m, w):
-        '''
+        """
         Derive linear parameters in LPPLs from nonlinear ones.
-        '''
+        """
         T = observations[0]
         P = observations[1]
         deltaT = tc - T
@@ -63,9 +64,10 @@ class LPPLS(object):
     def fit(self, observations, max_searches, minimizer='Nelder-Mead'):
         """
         Args:
-            observations (Mx2 numpy array): the observed data
-            max_searches (int): The maxi amount of searches to perform before giving up. The literature suggests 25
-            minimizer (str): See list of valid methods to pass to scipy.optimize.minimize: https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html#scipy.optimize.minimize
+            observations (Mx2 numpy array): the observed time-series data.
+            max_searches (int): The maxi amount of searches to perform before giving up. The literature suggests 25.
+            minimizer (str): See list of valid methods to pass to scipy.optimize.minimize:
+                https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html#scipy.optimize.minimize
 
         Returns:
             tc, m, w, a, b, c1, c2
@@ -78,8 +80,8 @@ class LPPLS(object):
             # set random initialization limits for non-linear params
             init_limits = [
                 (tc_init_min, tc_init_max),  # tc : Critical Time
-                (0.1, 0.9),                  # m : 0.1 ≤ m ≤ 0.9
-                (6, 13),                     # ω : 6 ≤ ω ≤ 13
+                (0.1, 0.9),  # m : 0.1 ≤ m ≤ 0.9
+                (6, 13),  # ω : 6 ≤ ω ≤ 13
             ]
 
             # randomly choose vals within bounds for non-linear params
@@ -88,42 +90,55 @@ class LPPLS(object):
             tc = non_lin_vals[0]
             m = non_lin_vals[1]
             w = non_lin_vals[2]
-
             seed = np.array([tc, m, w])
 
+            # Increment search count on SVD convergence error, but raise all other exceptions.
             try:
-                cofs = minimize(
-                    args=observations,
-                    fun=self.func_restricted,
-                    method=minimizer,
-                    x0=seed
-                )
-
-                if cofs.success:
-
-                    tc = cofs.x[0]
-                    m = cofs.x[1]
-                    w = cofs.x[2]
-
-                    # calculate the linear vals again...
-                    lin_vals = self.matrix_equation(observations, tc, m, w)
-
-                    a = float(lin_vals[0])
-                    b = float(lin_vals[1])
-                    c1 = float(lin_vals[2])
-                    c2 = float(lin_vals[3])
-
-                    c = (c1 ** 2 + c2 ** 2) ** 0.5
-
-                    # @TODO save these as variables local to the class so you can access them again
-                    return tc, m, w, a, b, c
-
-                else:
-                    search_count += 1
-            except Exception as e:
-                print('minimize failed: {}'.format(e))
+                tc, m, w, a, b, c = self.minimize(observations, seed, minimizer)
+                return tc, m, w, a, b, c
+            except (np.linalg.LinAlgError, UnboundLocalError):
                 search_count += 1
+
         return 0, 0, 0, 0, 0, 0
+
+    def minimize(self, observations, seed, minimizer):
+        """
+        Args:
+            observations (np.ndarray):  the observed time-series data.
+            seed (list):  time-critical, omega, and m.
+            minimizer (str):  See list of valid methods to pass to scipy.optimize.minimize:
+                https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html#scipy.optimize.minimize
+        Returns:
+            tc, m, w, a, b, c
+        """
+
+        cofs = minimize(
+            args=observations,
+            fun=self.func_restricted,
+            x0=seed,
+            method=minimizer
+        )
+
+        if cofs.success:
+
+            tc = cofs.x[0]
+            m = cofs.x[1]
+            w = cofs.x[2]
+
+            lin_vals = self.matrix_equation(observations, tc, m, w)
+
+            a = float(lin_vals[0])
+            b = float(lin_vals[1])
+            c1 = float(lin_vals[2])
+            c2 = float(lin_vals[3])
+            c = (c1 ** 2 + c2 ** 2) ** 0.5
+
+            # Use sklearn format for storing fit params
+            for coef in ['tc', 'm', 'w', 'a', 'b', 'c']:
+                self.coef_[coef] = eval(coef)
+            return tc, m, w, a, b, c
+        else:
+            raise UnboundLocalError
 
     def plot_fit(self, observations, tc, m, w):
         """
@@ -159,11 +174,11 @@ class LPPLS(object):
         func = self._func_compute_indicator
         func_arg_map = [(
             obs_copy[:, i:window_size + i],  # obs
-            i,                               # n_iter
-            window_size,                     # window_size
-            smallest_window_size,            # smallest_window_size
-            increment,                       # increment
-            max_searches                     # max_searches
+            i,  # n_iter
+            window_size,  # window_size
+            smallest_window_size,  # smallest_window_size
+            increment,  # increment
+            max_searches  # max_searches
         ) for i in range(obs_copy_len)]
 
         pool = multiprocessing.Pool(processes=workers)
