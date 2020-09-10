@@ -2,10 +2,7 @@
 
 name: 'PyTests'
 
-on:
-  push:
-    branches:
-      - master
+on: push
 
 jobs:
   pytest:
