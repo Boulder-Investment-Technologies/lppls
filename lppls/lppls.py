@@ -8,7 +8,7 @@ from scipy.optimize import minimize
 
 class LPPLS(object):
 
-    def __init__(self, observations):
+    def __init__(self, observations, matrix_equation_strategy='Estimate'):
         """
         Args:
             observations (np.array,pd.DataFrame): 2xM matrix with timestamp and observed value.
@@ -18,6 +18,7 @@ class LPPLS(object):
 
         self.observations = observations
         self.coef_ = {}
+        self.matrix_equation_strategy = matrix_equation_strategy
 
     def lppls(self, t, tc, m, w, a, b, c1, c2):
         return a + np.power(tc - t, m) * (b + ((c1 * np.cos(w * (tc - t))) + (c2 * np.sin(w * (tc - t)))))
@@ -61,7 +62,7 @@ class LPPLS(object):
 
         return np.linalg.lstsq(A.T, P, rcond=None)[0]
 
-    def fit(self, observations, max_searches, minimizer='Nelder-Mead', matrix_solution='Estimate'):
+    def fit(self, observations, max_searches, minimizer='Nelder-Mead'):
         """
         Args:
             observations (Mx2 numpy array): the observed time-series data.
@@ -74,7 +75,7 @@ class LPPLS(object):
         Returns:
             tc, m, w, a, b, c1, c2
         """
-        matrix_func = self.solve_matrix_equation if matrix_solution == 'Solve' else self.matrix_equation
+        matrix_func = self.solve_matrix_equation if self.matrix_equation_strategy == 'Solve' else self.matrix_equation
         search_count = 0
         # find bubble
         while search_count < max_searches:
@@ -149,8 +150,8 @@ class LPPLS(object):
         Returns:
             nothing, should plot the fit
         """
-
-        a, b, c1, c2 = self.matrix_equation(observations, tc, m, w).astype('float').tolist()
+        matrix_func = self.solve_matrix_equation if self.matrix_equation_strategy == 'Solve' else self.matrix_equation
+        a, b, c1, c2 = matrix_func(observations, tc, m, w).astype('float').tolist()
         lppls_fit = [self.lppls(t, tc, m, w, a, b, c1, c2) for t in observations[0]]
         original_observations = observations[1]
 
@@ -203,6 +204,7 @@ class LPPLS(object):
             last = obs_shrinking_slice[0][-1]
 
             qualified = {}
+            # TODO: add docstring
             # filter_conditions = [
             #   {'condition_1':[tc_range, m_range, w_range, O_min, D_min]},
             #   {'condition_2':[tc_range, m_range, w_range, O_range, D_range]}
@@ -230,7 +232,7 @@ class LPPLS(object):
                     else:
                         is_qualified = False
 
-                    qualified[condition_name] = is_qualified
+                    qualified[value] = is_qualified
 
             sign = 1 if b < 0 else -1
 
@@ -298,14 +300,14 @@ class LPPLS(object):
         yihi = sum(self._yihi(tc, m, w, time, obs))
 
         # --------------------------------
-        matrix_1 = np.matrix([
+        matrix_1 = np.array([
             [N, fi, gi, hi],
             [fi, fi_pow_2, figi, fihi],
             [gi, figi, gi_pow_2, gihi],
             [hi, fihi, gihi, hi_pow_2]
         ])
 
-        matrix_2 = np.matrix([
+        matrix_2 = np.array([
             [yi],
             [yifi],
             [yigi],
