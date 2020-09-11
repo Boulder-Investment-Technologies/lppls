@@ -96,7 +96,7 @@ class LPPLS(object):
             try:
                 tc, m, w, a, b, c, c1, c2 = self.minimize(observations, seed, minimizer)
                 return tc, m, w, a, b, c, c1, c2
-            except (np.linalg.LinAlgError, UnboundLocalError):
+            except (np.linalg.LinAlgError, UnboundLocalError, ValueError):
                 search_count += 1
 
         return 0, 0, 0, 0, 0, 0, 0, 0
