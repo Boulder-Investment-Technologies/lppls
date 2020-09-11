@@ -8,7 +8,7 @@ from scipy.optimize import minimize
 
 class LPPLS(object):
 
-    def __init__(self, observations, matrix_equation_strategy='Estimate'):
+    def __init__(self, observations):
         """
         Args:
             observations (np.array,pd.DataFrame): 2xM matrix with timestamp and observed value.
@@ -18,10 +18,10 @@ class LPPLS(object):
 
         self.observations = observations
         self.coef_ = {}
-        self.matrix_equation_strategy = matrix_equation_strategy
+        self.indicator_result = []
 
     def lppls(self, t, tc, m, w, a, b, c1, c2):
-        return a + np.power(tc - t, m) * (b + ((c1 * np.cos(w * (tc - t))) + (c2 * np.sin(w * (tc - t)))))
+        return a + np.power(tc - t, m) * (b + ((c1 * np.cos(w * np.log(tc - t))) + (c2 * np.sin(w * np.log(tc - t)))))
 
     def func_restricted(self, x, *args):
         """
@@ -39,7 +39,7 @@ class LPPLS(object):
         w = x[2]
         obs = args[0]
 
-        a, b, c1, c2 = self.matrix_equation(obs, tc, m, w).astype('float').tolist()
+        a, b, c1, c2 = self.matrix_equation(obs, tc, m, w)
 
         delta = [self.lppls(t, tc, m, w, a, b, c1, c2) for t in obs[0, :]]
         delta = np.subtract(delta, obs[1, :])
@@ -54,13 +54,13 @@ class LPPLS(object):
         T = observations[0]
         P = observations[1]
         deltaT = tc - T
-        phase = deltaT
+        phase = np.log(deltaT)
         fi = np.power(deltaT, m)
         gi = fi * np.cos(w * phase)
         hi = fi * np.sin(w * phase)
         A = np.stack([np.ones_like(deltaT), fi, gi, hi])
 
-        return np.linalg.lstsq(A.T, P, rcond=None)[0]
+        return np.linalg.lstsq(A.T, P, rcond=None)[0].astype('float').tolist()
 
     def fit(self, observations, max_searches, minimizer='Nelder-Mead'):
         """
@@ -69,13 +69,9 @@ class LPPLS(object):
             max_searches (int): The maxi amount of searches to perform before giving up. The literature suggests 25.
             minimizer (str): See list of valid methods to pass to scipy.optimize.minimize:
                 https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html#scipy.optimize.minimize
-            matrix_solution (str): Solve or Estimate. Whether to solve the matrix equation directly to obtain the linear
-                params or estimate via least square solution.
-
         Returns:
-            tc, m, w, a, b, c1, c2
+            tc, m, w, a, b, c, c1, c2
         """
-        matrix_func = self.solve_matrix_equation if self.matrix_equation_strategy == 'Solve' else self.matrix_equation
         search_count = 0
         # find bubble
         while search_count < max_searches:
@@ -98,23 +94,22 @@ class LPPLS(object):
 
             # Increment search count on SVD convergence error, but raise all other exceptions.
             try:
-                tc, m, w, a, b, c = self.minimize(observations, seed, minimizer, matrix_func)
-                return tc, m, w, a, b, c
+                tc, m, w, a, b, c, c1, c2 = self.minimize(observations, seed, minimizer)
+                return tc, m, w, a, b, c, c1, c2
             except (np.linalg.LinAlgError, UnboundLocalError):
                 search_count += 1
 
-        return 0, 0, 0, 0, 0, 0
+        return 0, 0, 0, 0, 0, 0, 0, 0
 
-    def minimize(self, observations, seed, minimizer, matrix_func):
+    def minimize(self, observations, seed, minimizer):
         """
         Args:
             observations (np.ndarray):  the observed time-series data.
             seed (list):  time-critical, omega, and m.
             minimizer (str):  See list of valid methods to pass to scipy.optimize.minimize:
                 https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html#scipy.optimize.minimize
-            matrix_func (func): The function used to estimate or solve linear params a b, c1, c2.
         Returns:
-            tc, m, w, a, b, c
+            tc, m, w, a, b, c, c1, c2
         """
 
         cofs = minimize(
@@ -130,41 +125,86 @@ class LPPLS(object):
             m = cofs.x[1]
             w = cofs.x[2]
 
-            a, b, c1, c2 = matrix_func(observations, tc, m, w).astype('float').tolist()
+            a, b, c1, c2 = self.matrix_equation(observations, tc, m, w)
             c = (c1 ** 2 + c2 ** 2) ** 0.5
 
             # Use sklearn format for storing fit params
-            for coef in ['tc', 'm', 'w', 'a', 'b', 'c']:
+            for coef in ['tc', 'm', 'w', 'a', 'b', 'c', 'c1', 'c2']:
                 self.coef_[coef] = eval(coef)
-            return tc, m, w, a, b, c
+            return tc, m, w, a, b, c, c1, c2
         else:
             raise UnboundLocalError
 
-    def plot_fit(self, observations, tc, m, w):
+    def plot_fit(self):
         """
         Args:
-            tc (float): predicted critical time
-            m (float): predicted degree of super-exponential growth
-            w (float): predicted scaling ratio of the temporal hierarchy of oscillations
             observations (Mx2 numpy array): the observed data
         Returns:
             nothing, should plot the fit
         """
-        matrix_func = self.solve_matrix_equation if self.matrix_equation_strategy == 'Solve' else self.matrix_equation
-        a, b, c1, c2 = matrix_func(observations, tc, m, w).astype('float').tolist()
-        lppls_fit = [self.lppls(t, tc, m, w, a, b, c1, c2) for t in observations[0]]
-        original_observations = observations[1]
+        tc, m, w, a, b, c, c1, c2 = self.coef_.values()
+        lppls_fit = [self.lppls(t, tc, m, w, a, b, c1, c2) for t in self.observations[0]]
 
         data = pd.DataFrame({
-            'Time': observations[0],
+            'Time': self.observations[0],
             'LPPLS Fit': lppls_fit,
-            'Observations': original_observations,
+            'Observations': self.observations[1],
         })
         data = data.set_index('Time')
         data.plot(figsize=(14, 8))
 
+    def plot_confidence_indicators(self, res, condition_name, title):
+        """
+        Args:
+            res (list): result from mp_compute_indicator
+            condition_name (str): the name you assigned to the filter condition in your config
+            title (str): super title for both subplots
+        Returns:
+            nothing, should plot the indicator
+        """
+        price = self.observations[1, :]
+        n = len(price) - len(res)
+        pos_conf_lst = [0] * n
+        neg_conf_lst = [0] * n
+        for r in res:
+            pos_true_count = 0
+            neg_true_count = 0
+            for fits in r:
+                if fits['qualified'][condition_name] and fits['sign'] > 0:
+                    pos_true_count = pos_true_count + 1
+                if fits['qualified'][condition_name] and fits['sign'] < 0:
+                    neg_true_count = neg_true_count + 1
+            pos_conf_lst.append(pos_true_count / len(r))
+            neg_conf_lst.append(neg_true_count / len(r))
+
+        fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(15, 12))
+        fig.suptitle(title)
+        # plot pos bubbles
+        ax1_0 = ax1.twinx()
+        ax1.plot(price, color='black')
+        ax1_0.plot(pos_conf_lst, label='bubble indicator (pos)')
+
+        # plot neg bubbles
+        ax2_0 = ax2.twinx()
+        ax2.plot(price, color='black')
+        ax2_0.plot(neg_conf_lst, label='bubble indicator (neg)')
+
+        # set grids
+        ax1.grid(which='major', axis='both', linestyle='--')
+        ax2.grid(which='major', axis='both', linestyle='--')
+
+        # set labels
+        ax1.set_ylabel('price')
+        ax2.set_ylabel('price')
+
+        ax1_0.set_ylabel('bubble indicator (pos)')
+        ax2_0.set_ylabel('bubble indicator (neg)')
+
+        ax1_0.legend(loc=2)
+        ax2_0.legend(loc=2)
+
     def mp_compute_indicator(self, workers, window_size=80, smallest_window_size=20, increment=5, max_searches=25,
-                             filter_conditions=[]):
+                             filter_conditions_config=[]):
         obs_copy = self.observations
         obs_copy_len = len(obs_copy[0, :]) - window_size
 
@@ -176,40 +216,41 @@ class LPPLS(object):
             smallest_window_size,  # smallest_window_size
             increment,  # increment
             max_searches, # max_searches
-            filter_conditions,
+            filter_conditions_config,
         ) for i in range(obs_copy_len)]
 
         pool = multiprocessing.Pool(processes=workers)
         result = pool.map(func, func_arg_map)
         pool.close()
 
+        self.indicator_result = result
         return result
 
     def _func_compute_indicator(self, args):
 
-        obs, n_iter, window_size, smallest_window_size, increment, max_searches, filter_conditions = args
+        obs, n_iter, window_size, smallest_window_size, increment, max_searches, filter_conditions_config = args
 
         n_fits = (window_size - smallest_window_size) // increment
 
-        cofs = []
+        res = []
 
         # run n fits on the observation slice.
         for j in range(n_fits):
             obs_shrinking_slice = obs[:, j * increment:window_size + n_iter]
 
             # fit the model to the data and get back the params
-            tc, m, w, a, b, c = self.fit(obs_shrinking_slice, max_searches, minimizer='Nelder-Mead')
+            tc, m, w, a, b, c, c1, c2 = self.fit(obs_shrinking_slice, max_searches, minimizer='Nelder-Mead')
 
             first = obs_shrinking_slice[0][0]
             last = obs_shrinking_slice[0][-1]
 
             qualified = {}
             # TODO: add docstring
-            # filter_conditions = [
+            # filter_conditions_config = [
             #   {'condition_1':[tc_range, m_range, w_range, O_min, D_min]},
-            #   {'condition_2':[tc_range, m_range, w_range, O_range, D_range]}
+            #   {'condition_2':[tc_range, m_range, w_range, O_min, O_min]}
             # ]
-            for condition in filter_conditions:
+            for condition in filter_conditions_config:
                 for value in condition:
                     tc_min, tc_max = condition[value][0]
                     m_min, m_max = condition[value][1]
@@ -236,20 +277,22 @@ class LPPLS(object):
 
             sign = 1 if b < 0 else -1
 
-            cofs.append({
+            res.append({
                 'tc': tc,
                 'm': m,
                 'w': w,
                 'a': a,
                 'b': b,
                 'c': c,
+                'c1': c1,
+                'c2': c2,
                 'qualified': qualified,
                 'sign': sign,
                 't1': first,
                 't2': last,
             })
 
-        return cofs
+        return res
 
     def _get_tc_bounds(self, obs, lower_bound_pct, upper_bound_pct):
         """
@@ -268,104 +311,3 @@ class LPPLS(object):
         tc_init_min = t_last - pct_delta_min
         tc_init_max = t_last + pct_delta_max
         return tc_init_min, tc_init_max
-
-    def solve_matrix_equation(self, observations, tc, m, w):
-        '''
-        Solve the matrix equation using the Filimonov trick
-        '''
-        time = observations[0, :]
-        obs = observations[1, :]
-        N = len(obs)
-        zeros = np.array([0, 0, 0, 0])
-
-        # --------------------------------
-        fi = sum(self._fi(tc, m, time))
-        gi = sum(self._gi(tc, m, w, time))
-        hi = sum(self._hi(tc, m, w, time))
-
-        # --------------------------------
-        fi_pow_2 = sum(self._fi_pow_2(tc, m, time))
-        gi_pow_2 = sum(self._gi_pow_2(tc, m, w, time))
-        hi_pow_2 = sum(self._hi_pow_2(tc, m, w, time))
-
-        # --------------------------------
-        figi = sum(self._figi(tc, m, w, time))
-        fihi = sum(self._fihi(tc, m, w, time))
-        gihi = sum(self._gihi(tc, m, w, time))
-
-        # --------------------------------
-        yi = sum(self._yi(obs))
-        yifi = sum(self._yifi(tc, m, time, obs))
-        yigi = sum(self._yigi(tc, m, w, time, obs))
-        yihi = sum(self._yihi(tc, m, w, time, obs))
-
-        # --------------------------------
-        matrix_1 = np.array([
-            [N, fi, gi, hi],
-            [fi, fi_pow_2, figi, fihi],
-            [gi, figi, gi_pow_2, gihi],
-            [hi, fihi, gihi, hi_pow_2]
-        ])
-
-        matrix_2 = np.array([
-            [yi],
-            [yifi],
-            [yigi],
-            [yihi]
-        ])
-
-        try:
-
-            matrix_1_is_not_inf_or_nan = not np.isinf(matrix_1).any() and not np.isnan(matrix_1).any()
-            matrix_2_is_not_inf_or_nan = not np.isinf(matrix_2).any() and not np.isnan(matrix_2).any()
-
-            if matrix_1_is_not_inf_or_nan and matrix_2_is_not_inf_or_nan:
-                inverse = np.linalg.pinv(matrix_1)
-                product = inverse * matrix_2
-                return product
-            return zeros
-
-        except Exception as e:
-            print('matrix_equation failed: {}'.format(e))
-
-        return zeros
-
-    # matrix helpers
-    def _yi(self, price_series):
-        return [p for p in price_series]
-
-    def _fi(self, tc, m, time_series):
-        return [np.power((tc - t), m) for t in time_series]
-
-    def _gi(self, tc, m, w, time_series):
-        return [np.power((tc - t), m) * np.cos(w * (tc - t)) for t in time_series]
-
-    def _hi(self, tc, m, w, time_series):
-        return [np.power((tc - t), m) * np.sin(w * (tc - t)) for t in time_series]
-
-    def _fi_pow_2(self, tc, m, time_series):
-        return np.power(self._fi(tc, m, time_series), 2)
-
-    def _gi_pow_2(self, tc, m, w, time_series):
-        return np.power(self._gi(tc, m, w, time_series), 2)
-
-    def _hi_pow_2(self, tc, m, w, time_series):
-        return np.power(self._hi(tc, m, w, time_series), 2)
-
-    def _figi(self, tc, m, w, time_series):
-        return np.multiply(self._fi(tc, m, time_series), self._gi(tc, m, w, time_series))
-
-    def _fihi(self, tc, m, w, time_series):
-        return np.multiply(self._fi(tc, m, time_series), self._hi(tc, m, w, time_series))
-
-    def _gihi(self, tc, m, w, time_series):
-        return np.multiply(self._gi(tc, m, w, time_series), self._hi(tc, m, w, time_series))
-
-    def _yifi(self, tc, m, time_series, price_series):
-        return np.multiply(self._yi(price_series), self._fi(tc, m, time_series))
-
-    def _yigi(self, tc, m, w, time_series, price_series):
-        return np.multiply(self._yi(price_series), self._gi(tc, m, w, time_series))
-
-    def _yihi(self, tc, m, w, time_series, price_series):
-        return np.multiply(self._yi(price_series), self._hi(tc, m, w, time_series))
