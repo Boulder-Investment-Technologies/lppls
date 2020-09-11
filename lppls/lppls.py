@@ -1,5 +1,5 @@
 import multiprocessing
-# from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 import random
@@ -18,6 +18,7 @@ class LPPLS(object):
 
         self.observations = observations
         self.coef_ = {}
+        self.indicator_result = []
 
     def lppls(self, t, tc, m, w, a, b, c1, c2):
         return a + np.power(tc - t, m) * (b + ((c1 * np.cos(w * np.log(tc - t))) + (c2 * np.sin(w * np.log(tc - t)))))
@@ -152,6 +153,56 @@ class LPPLS(object):
         data = data.set_index('Time')
         data.plot(figsize=(14, 8))
 
+    def plot_confidence_indicators(self, res, condition_name, title):
+        """
+        Args:
+            res (list): result from mp_compute_indicator
+            condition_name (str): the name you assigned to the filter condition in your config
+            title (str): super title for both subplots
+        Returns:
+            nothing, should plot the indicator
+        """
+        price = self.observations[1, :]
+        n = len(price) - len(res)
+        pos_conf_lst = [0] * n
+        neg_conf_lst = [0] * n
+        for r in res:
+            pos_true_count = 0
+            neg_true_count = 0
+            for fits in r:
+                if fits['qualified'][condition_name] and fits['sign'] > 0:
+                    pos_true_count = pos_true_count + 1
+                if fits['qualified'][condition_name] and fits['sign'] < 0:
+                    neg_true_count = neg_true_count + 1
+            pos_conf_lst.append(pos_true_count / len(r))
+            neg_conf_lst.append(neg_true_count / len(r))
+
+        fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(15, 12))
+        fig.suptitle(title)
+        # plot pos bubbles
+        ax1_0 = ax1.twinx()
+        ax1.plot(price, color='black')
+        ax1_0.plot(pos_conf_lst, label='bubble indicator (pos)')
+
+        # plot neg bubbles
+        ax2_0 = ax2.twinx()
+        ax2.plot(price, color='black')
+        ax2_0.plot(neg_conf_lst, label='bubble indicator (neg)')
+
+        # set grids
+        ax1.grid(which='major', axis='both', linestyle='--')
+        ax2.grid(which='major', axis='both', linestyle='--')
+
+        # set labels
+        ax1.set_ylabel('price')
+        ax2.set_ylabel('price')
+
+        ax1_0.set_ylabel('bubble indicator (pos)')
+        ax2_0.set_ylabel('bubble indicator (neg)')
+
+        ax1_0.legend(loc=2)
+        ax2_0.legend(loc=2)
+
     def mp_compute_indicator(self, workers, window_size=80, smallest_window_size=20, increment=5, max_searches=25,
                              filter_conditions_config=[]):
         obs_copy = self.observations
@@ -172,6 +223,7 @@ class LPPLS(object):
         result = pool.map(func, func_arg_map)
         pool.close()
 
+        self.indicator_result = result
         return result
 
     def _func_compute_indicator(self, args):
@@ -196,7 +248,7 @@ class LPPLS(object):
             # TODO: add docstring
             # filter_conditions_config = [
             #   {'condition_1':[tc_range, m_range, w_range, O_min, D_min]},
-            #   {'condition_2':[tc_range, m_range, w_range, O_range, D_range]}
+            #   {'condition_2':[tc_range, m_range, w_range, O_min, O_min]}
             # ]
             for condition in filter_conditions_config:
                 for value in condition:

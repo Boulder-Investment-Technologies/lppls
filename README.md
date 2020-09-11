@@ -84,6 +84,34 @@ lppls_model.plot_fit(observations, tc, m, w)
 
 ![LPPLS Fit to the S&P500 Dataset](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/sp500_lppls_fit.png)
 
+```python
+# define custom filter condition
+filter_conditions_config = [
+  {'condition_1':[
+      (0.0, 0.1), # tc_range
+      (-1,1), # m_range
+      (4,25), # w_range
+      2.5, # O_min
+      0.5, # D_min
+  ]},
+]
+
+# compute the confidence indicator
+res = lppls_model.mp_compute_indicator(
+    workers=8, 
+    window_size=120, 
+    smallest_window_size=30, 
+    increment=5, 
+    max_searches=25,
+    filter_conditions_config=filter_conditions_config
+)
+
+lppls_model.plot_confidence_indicators(res, condition_name='condition_1', title='Short Term Indicator 120-30')
+
+# should give a plot like the following...
+```
+![LPPLS Confidnce Indicator](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/sp500_confidence_indicator.png)
+
 ## References
  - Filimonov, V. and Sornette, D. A Stable and Robust Calibration Scheme of the Log-Periodic Power Law Model. Physica A: Statistical Mechanics and its Applications. 2013
  - Sornette, D. Why Stock Markets Crash: Critical Events in Complex Financial Systems. Princeton University Press. 2002.
