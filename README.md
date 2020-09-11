@@ -74,10 +74,10 @@ MAX_SEARCHES = 25
 lppls_model = lppls.LPPLS(observations=observations)
 
 # fit the model to the data and get back the params
-tc, m, w, a, b, c = lppls_model.fit(observations, MAX_SEARCHES, minimizer='Nelder-Mead')
+tc, m, w, a, b, c, c1, c2 = lppls_model.fit(observations, MAX_SEARCHES, minimizer='Nelder-Mead')
 
 # visualize the fit
-lppls_model.plot_fit(observations, tc, m, w)
+lppls_model.plot_fit()
 
 # should give a plot like the following...
 ```
