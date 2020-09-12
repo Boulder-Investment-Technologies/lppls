@@ -77,11 +77,12 @@ class LPPLS(object):
         while search_count < max_searches:
             tc_init_min, tc_init_max = self._get_tc_bounds(observations, 0.20, 0.20)
 
+            # @TODO make configurable
             # set random initialization limits for non-linear params
             init_limits = [
                 (tc_init_min, tc_init_max),  # tc : Critical Time
-                (0.1, 0.9),  # m : 0.1 ≤ m ≤ 0.9
-                (6, 13),  # ω : 6 ≤ ω ≤ 13
+                (0, 2),  # m : 0.1 ≤ m ≤ 0.9
+                (1, 50),  # ω : 6 ≤ ω ≤ 13
             ]
 
             # randomly choose vals within bounds for non-linear params
