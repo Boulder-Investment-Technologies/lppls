@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import random
 from scipy.optimize import minimize
+from numba import njit
 
 
 class LPPLS(object):
@@ -20,7 +21,9 @@ class LPPLS(object):
         self.coef_ = {}
         self.indicator_result = []
 
-    def lppls(self, t, tc, m, w, a, b, c1, c2):
+    @staticmethod
+    @njit
+    def lppls(t, tc, m, w, a, b, c1, c2):
         return a + np.power(tc - t, m) * (b + ((c1 * np.cos(w * np.log(tc - t))) + (c2 * np.sin(w * np.log(tc - t)))))
 
     def func_restricted(self, x, *args):
@@ -39,7 +42,8 @@ class LPPLS(object):
         w = x[2]
         obs = args[0]
 
-        a, b, c1, c2 = self.matrix_equation(obs, tc, m, w)
+        res = self.matrix_equation(obs, tc, m, w)
+        a, b, c1, c2 = res[0].astype('float').tolist()
 
         delta = [self.lppls(t, tc, m, w, a, b, c1, c2) for t in obs[0, :]]
         delta = np.subtract(delta, obs[1, :])
@@ -47,7 +51,9 @@ class LPPLS(object):
 
         return np.sum(delta)
 
-    def matrix_equation(self, observations, tc, m, w):
+    @staticmethod
+    @njit
+    def matrix_equation(observations, tc, m, w):
         """
         Derive linear parameters in LPPLs from nonlinear ones.
         """
@@ -58,9 +64,8 @@ class LPPLS(object):
         fi = np.power(deltaT, m)
         gi = fi * np.cos(w * phase)
         hi = fi * np.sin(w * phase)
-        A = np.stack([np.ones_like(deltaT), fi, gi, hi])
-
-        return np.linalg.lstsq(A.T, P, rcond=None)[0].astype('float').tolist()
+        A = np.stack((np.ones_like(deltaT), fi, gi, hi))
+        return np.linalg.lstsq(A.T, P)
 
     def fit(self, observations, max_searches, minimizer='Nelder-Mead'):
         """
@@ -80,9 +85,9 @@ class LPPLS(object):
             # @TODO make configurable
             # set random initialization limits for non-linear params
             init_limits = [
-                (tc_init_min, tc_init_max),  # tc : Critical Time
-                (0, 2),  # m : 0.1 ≤ m ≤ 0.9
-                (1, 50),  # ω : 6 ≤ ω ≤ 13
+                (tc_init_min, tc_init_max),  # tc
+                (0, 2),  # m
+                (1, 50),  # ω
             ]
 
             # randomly choose vals within bounds for non-linear params
@@ -126,7 +131,9 @@ class LPPLS(object):
             m = cofs.x[1]
             w = cofs.x[2]
 
-            a, b, c1, c2 = self.matrix_equation(observations, tc, m, w)
+            res = self.matrix_equation(observations, tc, m, w)
+            a, b, c1, c2 = res[0].astype('float').tolist()
+
             c = (c1 ** 2 + c2 ** 2) ** 0.5
 
             # Use sklearn format for storing fit params
