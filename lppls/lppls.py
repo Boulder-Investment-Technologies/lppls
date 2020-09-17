@@ -65,7 +65,7 @@ class LPPLS(object):
         gi = fi * np.cos(w * phase)
         hi = fi * np.sin(w * phase)
         A = np.stack((np.ones_like(deltaT), fi, gi, hi))
-        return np.linalg.lstsq(A.T, P)
+        return np.linalg.lstsq(A.T, P, rcond=-1.0)
 
     def fit(self, observations, max_searches, minimizer='Nelder-Mead'):
         """
