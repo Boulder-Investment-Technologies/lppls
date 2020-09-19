@@ -86,8 +86,8 @@ class LPPLS(object):
             # set random initialization limits for non-linear params
             init_limits = [
                 (tc_init_min, tc_init_max),  # tc
-                (0, 2),  # m
-                (1, 50),  # ω
+                (0.0, 2.0),  # m
+                (1.0, 50.0),  # ω
             ]
 
             # randomly choose vals within bounds for non-linear params
@@ -137,6 +137,7 @@ class LPPLS(object):
             c = (c1 ** 2 + c2 ** 2) ** 0.5
 
             # Use sklearn format for storing fit params
+            # @TODO only save when running single fits.
             for coef in ['tc', 'm', 'w', 'a', 'b', 'c', 'c1', 'c2']:
                 self.coef_[coef] = eval(coef)
             return tc, m, w, a, b, c, c1, c2
@@ -272,9 +273,10 @@ class LPPLS(object):
                     m_in_range = m_min < m < m_max
                     w_in_range = w_min < w < w_max
 
-                    O_in_range = ((w / (2 * np.pi)) * np.log(abs(tc / (tc - last)))) > O_min
+                    # print('tc - last', np.abs(tc - last))
+                    O_in_range = ((w / (2.0 * np.pi)) * np.log(np.abs(tc / (tc - last)))) > O_min
 
-                    D_in_range = (m * abs(b)) / (w * abs(c)) > D_min if m > 0 and w > 0 else False
+                    D_in_range = (m * np.abs(b)) / (w * np.abs(c)) > D_min #if m > 0 and w > 0 else False
 
                     if tc_in_range and m_in_range and w_in_range and O_in_range and D_in_range:
                         is_qualified = True
