@@ -42,7 +42,7 @@ def test_minimize(observations, lppls_model):
     # Testing the minimizer is slow test but vital for confidence as dependencies are updated.
     # Test that the minimizer is giving expected results
     seed = [1346.2379633747132, 0.25299669770427197, 9.202480294316384]
-    tc, m, w, a, b, c, c1, c2 = lppls_model.minimize(observations, seed, "Nelder-Mead")
+    tc, m, w, a, b, c, c1, c2 = lppls_model.minimize(observations, seed, "SLSQP")
 
     # Test that coefficients were successfully saved to object memory (self.coef_)
     for coef in ["tc", "m", "w", "a", "b", "c", "c1", "c2"]:
@@ -51,7 +51,7 @@ def test_minimize(observations, lppls_model):
     # Test that the minimizer function is raising an UnboundedError when solving the linear params fails.
     with pytest.raises(np.linalg.LinAlgError):
         seed = [np.nan, np.nan, np.nan]
-        lppls_model.minimize(observations, seed, "Nelder-Mead")
+        lppls_model.minimize(observations, seed, "SLSQP")
 
 
 def test_fit(observations, lppls_model):
@@ -61,7 +61,7 @@ def test_fit(observations, lppls_model):
     MAX_SEARCHES = 25
 
     # fit the model to the data and get back the params
-    lppls_model.fit(observations, MAX_SEARCHES, minimizer='Nelder-Mead')
+    lppls_model.fit(observations, MAX_SEARCHES, minimizer='SLSQP')
 
 
 def test__get_tc_bounds(observations, lppls_model):
