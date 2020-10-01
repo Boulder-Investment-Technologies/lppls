@@ -98,7 +98,7 @@ filter_conditions_config = [
 
 # compute the confidence indicator
 res = lppls_model.mp_compute_indicator(
-    workers=8, 
+    workers=1, 
     window_size=120, 
     smallest_window_size=30, 
     increment=5, 
