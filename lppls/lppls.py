@@ -208,26 +208,23 @@ class LPPLS(object):
                              filter_conditions_config=[]):
         obs_copy = self.observations
         obs_copy_len = len(obs_copy[0, :]) - window_size
-        import time
-        t1 = time.time()
+
         func = self._func_compute_indicator
-        t2 = time.time()
+
         func_arg_map = [(
             obs_copy[:, i:window_size + i],  # obs
             i,  # n_iter
             window_size,  # window_size
             smallest_window_size,  # smallest_window_size
             increment,  # increment
-            max_searches, # max_searches
+            max_searches,  # max_searches
             filter_conditions_config,
         ) for i in range(obs_copy_len)]
-        t3 = time.time()
+
         pool = multiprocessing.Pool(processes=workers)
-        t4 = time.time()
+
         result = pool.map(func, func_arg_map)
         pool.close()
-        t5 = time.time()
-        print(f'FOOK {t2-t1} {t3-t1} {t4-t3} {t5-t4}')
 
         self.indicator_result = result
         return result
