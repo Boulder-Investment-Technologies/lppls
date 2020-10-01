@@ -240,7 +240,7 @@ class LPPLS(object):
             obs_shrinking_slice = obs[:, j * increment:window_size + n_iter]
 
             # fit the model to the data and get back the params
-            tc, m, w, a, b, c, c1, c2 = self.fit(obs_shrinking_slice, max_searches, minimizer='Nelder-Mead')
+            tc, m, w, a, b, c, c1, c2 = self.fit(obs_shrinking_slice, max_searches, minimizer='SLSQP')
 
             first = obs_shrinking_slice[0][0]
             last = obs_shrinking_slice[0][-1]
