@@ -210,17 +210,19 @@ class LPPLS(object):
         obs_copy_len = len(obs_copy[0, :]) - window_size
 
         func = self._func_compute_indicator
+
         func_arg_map = [(
             obs_copy[:, i:window_size + i],  # obs
             i,  # n_iter
             window_size,  # window_size
             smallest_window_size,  # smallest_window_size
             increment,  # increment
-            max_searches, # max_searches
+            max_searches,  # max_searches
             filter_conditions_config,
         ) for i in range(obs_copy_len)]
 
         pool = multiprocessing.Pool(processes=workers)
+
         result = pool.map(func, func_arg_map)
         pool.close()
 
@@ -240,7 +242,7 @@ class LPPLS(object):
             obs_shrinking_slice = obs[:, j * increment:window_size + n_iter]
 
             # fit the model to the data and get back the params
-            tc, m, w, a, b, c, c1, c2 = self.fit(obs_shrinking_slice, max_searches, minimizer='Nelder-Mead')
+            tc, m, w, a, b, c, c1, c2 = self.fit(obs_shrinking_slice, max_searches, minimizer='SLSQP')
 
             first = obs_shrinking_slice[0][0]
             last = obs_shrinking_slice[0][-1]

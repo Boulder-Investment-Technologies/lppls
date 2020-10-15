@@ -10,11 +10,13 @@ import numpy as np
 def data():
     return data_loader.sp500()
 
+
 @pytest.fixture
 def observations(data):
     time_ = np.linspace(0, len(data) - 1, len(data))
     price = [p for p in data['Adj Close']]
     return np.array([time_, price])
+
 
 @pytest.fixture
 def lppls_model(observations):
@@ -40,7 +42,7 @@ def test_minimize(observations, lppls_model):
     # Testing the minimizer is slow test but vital for confidence as dependencies are updated.
     # Test that the minimizer is giving expected results
     seed = [1346.2379633747132, 0.25299669770427197, 9.202480294316384]
-    tc, m, w, a, b, c, c1, c2 = lppls_model.minimize(observations, seed, "Nelder-Mead")
+    tc, m, w, a, b, c, c1, c2 = lppls_model.minimize(observations, seed, "SLSQP")
 
     # Test that coefficients were successfully saved to object memory (self.coef_)
     for coef in ["tc", "m", "w", "a", "b", "c", "c1", "c2"]:
@@ -49,12 +51,7 @@ def test_minimize(observations, lppls_model):
     # Test that the minimizer function is raising an UnboundedError when solving the linear params fails.
     with pytest.raises(np.linalg.LinAlgError):
         seed = [np.nan, np.nan, np.nan]
-        lppls_model.minimize(observations, seed, "Nelder-Mead")
-
-    # # Test that numpy.linalg.LinAlgError is raised when non-linear minimization fails.
-    # with pytest.raises(np.linalg.LinAlgError):
-    #     seed = [1.28337021e+03, 5.20824525e-01, 1.26182622e+01]
-    #     lppls_model.minimize(observations, seed, "Nelder-Mead")
+        lppls_model.minimize(observations, seed, "SLSQP")
 
 
 def test_fit(observations, lppls_model):
@@ -64,7 +61,7 @@ def test_fit(observations, lppls_model):
     MAX_SEARCHES = 25
 
     # fit the model to the data and get back the params
-    tc, m, w, a, b, c, c1, c2 = lppls_model.fit(observations, MAX_SEARCHES, minimizer='Nelder-Mead')
+    lppls_model.fit(observations, MAX_SEARCHES, minimizer='SLSQP')
 
 
 def test__get_tc_bounds(observations, lppls_model):
@@ -76,15 +73,16 @@ def test__get_tc_bounds(observations, lppls_model):
 
 
 def test_matrix_equation(observations, lppls_model):
-    # Test that the linear params are generated in an expected way.
+    # Test that the linear params are generated in an expected way (10-decimal precision)
 
     # Case 1, expected values
     tc, m, w = 1341.3258583124998, 0.28623183559375, 6.620224900062501
     lin_vals = lppls_model.matrix_equation(observations, tc, m, w)
-    assert lin_vals == [4022.6602773956506, -285.82229531206656, -5.534444109995974, 10.151437800554937]
+    assert (np.round(lin_vals, 10) == np.round(
+        [4022.6602773956506, -285.82229531206656, -5.534444109995974, 10.151437800554937], 10)).all()
 
     # Case 2, expected values
     tc, m, w = 1344.1378622083332, 0.2704276238124999, 6.796222699041667
     lin_vals = lppls_model.matrix_equation(observations, tc, m, w)
-    assert lin_vals == [4123.919805408301, -333.7726805698412, -12.107142946248267, -1.8589644488871784]
-
+    assert (np.round(lin_vals, 10) == np.round(
+        [4123.919805408301, -333.7726805698412, -12.107142946248267, -1.8589644488871784], 10)).all()
