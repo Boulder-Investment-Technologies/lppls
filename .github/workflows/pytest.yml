@@ -19,7 +19,12 @@ jobs:
       run: |
         pip install --upgrade pip
         pip install setuptools wheel
-        cat requirements.txt | xargs pip install
+        pip install matplotlib
+        pip install numpy
+        pip install pandas
+        pip install scipy
+        pip install llvmlite
+        pip install numba
         
     - name: Run Pytest
       run: |
