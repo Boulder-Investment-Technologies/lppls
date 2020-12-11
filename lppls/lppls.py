@@ -1,5 +1,6 @@
 import multiprocessing
 from matplotlib import pyplot as plt
+from numba import njit
 import numpy as np
 import pandas as pd
 import random
@@ -20,7 +21,9 @@ class LPPLS(object):
         self.coef_ = {}
         self.indicator_result = []
 
-    def lppls(self, t, tc, m, w, a, b, c1, c2):
+    @staticmethod
+    @njit
+    def lppls(t, tc, m, w, a, b, c1, c2):
         return a + np.power(tc - t, m) * (b + ((c1 * np.cos(w * np.log(tc - t))) + (c2 * np.sin(w * np.log(tc - t)))))
 
     def func_restricted(self, x, *args):
@@ -47,7 +50,9 @@ class LPPLS(object):
 
         return np.sum(delta)
 
-    def matrix_equation(self, observations, tc, m, w):
+    @staticmethod
+    @njit
+    def matrix_equation(observations, tc, m, w):
         """
         Derive linear parameters in LPPLs from nonlinear ones.
         """
@@ -58,9 +63,9 @@ class LPPLS(object):
         fi = np.power(deltaT, m)
         gi = fi * np.cos(w * phase)
         hi = fi * np.sin(w * phase)
-        A = np.stack([np.ones_like(deltaT), fi, gi, hi])
+        A = np.stack((np.ones_like(deltaT), fi, gi, hi))
 
-        return np.linalg.lstsq(A.T, P, rcond=None)[0].astype('float').tolist()
+        return np.linalg.lstsq(A.T, P, rcond=-1.0)[0]
 
     def fit(self, observations, max_searches, minimizer='Nelder-Mead'):
         """
@@ -165,18 +170,28 @@ class LPPLS(object):
         """
         price = self.observations[1, :]
         n = len(price) - len(res)
+        pos_fits = [0] * n
+        neg_fits = [0] * n
         pos_conf_lst = [0] * n
         neg_conf_lst = [0] * n
         for r in res:
+            pos_count = 0
+            neg_count = 0
             pos_true_count = 0
             neg_true_count = 0
             for fits in r:
-                if fits['qualified'][condition_name] and fits['sign'] > 0:
-                    pos_true_count = pos_true_count + 1
-                if fits['qualified'][condition_name] and fits['sign'] < 0:
-                    neg_true_count = neg_true_count + 1
-            pos_conf_lst.append(pos_true_count / len(r))
-            neg_conf_lst.append(neg_true_count / len(r))
+                if fits['sign'] > 0:
+                    pos_count += 1
+                    if fits['qualified'][condition_name]:
+                        pos_true_count += 1
+                if fits['sign'] < 0:
+                    neg_count += 1
+                    if fits['qualified'][condition_name]:
+                        neg_true_count = neg_true_count + 1
+            # pos_conf_lst.append(pos_true_count / len(r))
+            # neg_conf_lst.append(neg_true_count / len(r))
+            pos_conf_lst.append(pos_true_count / pos_count if pos_count > 0 else 0)
+            neg_conf_lst.append(neg_true_count / neg_count if neg_count > 0 else 0)
 
         fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(15, 12))
         fig.suptitle(title)
