@@ -23,8 +23,8 @@ jobs:
         pip install numpy
         pip install pandas
         pip install scipy
-        pip install llvmlite
         pip install numba
+        pip install llvmlite
         
     - name: Run Pytest
       run: |
