@@ -118,8 +118,11 @@ If you wish to store `res` as a pd.DataFrame, use `res_to_df`.
 ```python
 res_df = lppls_model.res_to_df(res, condition_name='condition_1')
 res_df.tail()
+# gives the following...
 ```
-![res_to_fit](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/res_to_df.png)
+<div style="height: 200px; overflow-y:scroll;">
+  <img src="https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/res_to_df.png" width="500" />
+</div>
 
 ## References
  - Filimonov, V. and Sornette, D. A Stable and Robust Calibration Scheme of the Log-Periodic Power Law Model. Physica A: Statistical Mechanics and its Applications. 2013
