@@ -115,14 +115,17 @@ lppls_model.plot_confidence_indicators(res, condition_name='condition_1', title=
 ![LPPLS Confidnce Indicator](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/sp500_confidence_indicator.png)
 
 If you wish to store `res` as a pd.DataFrame, use `res_to_df`.
-```python
-res_df = lppls_model.res_to_df(res, condition_name='condition_1')
-res_df.tail()
-# gives the following...
-```
-<div style="height: 200px; overflow-y:scroll;">
-  <img src="https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/res_to_df.png" width="500" />
-</div>
+<details>
+  <summary>Example</summary>
+
+  ```python
+  res_df = lppls_model.res_to_df(res, condition_name='condition_1')
+  res_df.tail()
+  # gives the following...
+  ```
+  <img src="https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/res_to_df.png"  width="500"/>
+  
+</details>
 
 ## References
  - Filimonov, V. and Sornette, D. A Stable and Robust Calibration Scheme of the Log-Periodic Power Law Model. Physica A: Statistical Mechanics and its Applications. 2013
