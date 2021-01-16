@@ -40,6 +40,7 @@ Dependencies
  - NumPy (>= 1.17.0)
  - Pandas (>= 0.25.0)
  - SciPy (>= 1.3.0)
+ - Pytest (>= 6.2.1)
 
 User installation
 ```
@@ -90,7 +91,7 @@ lppls_model.plot_fit()
 filter_conditions_config = [
   {'condition_1':[
       (0.0, 0.1), # tc_range
-      (-1,1), # m_range
+      (0,1), # m_range
       (4,25), # w_range
       2.5, # O_min
       0.5, # D_min
@@ -99,7 +100,7 @@ filter_conditions_config = [
 
 # compute the confidence indicator
 res = lppls_model.mp_compute_indicator(
-    workers=1, 
+    workers=4, 
     window_size=120, 
     smallest_window_size=30, 
     increment=5, 
@@ -112,6 +113,13 @@ lppls_model.plot_confidence_indicators(res, condition_name='condition_1', title=
 # should give a plot like the following...
 ```
 ![LPPLS Confidnce Indicator](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/sp500_confidence_indicator.png)
+
+If you wish to store `res` as a pd.DataFrame, use `res_to_df`.
+```python
+res_df = lppls_model.res_to_df(res, condition_name='condition_1')
+res_df.tail()
+```
+![res_to_fit](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/res_to_df.png)
 
 ## References
  - Filimonov, V. and Sornette, D. A Stable and Robust Calibration Scheme of the Log-Periodic Power Law Model. Physica A: Statistical Mechanics and its Applications. 2013

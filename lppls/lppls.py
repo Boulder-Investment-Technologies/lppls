@@ -168,42 +168,19 @@ class LPPLS(object):
         Returns:
             nothing, should plot the indicator
         """
-        price = self.observations[1, :]
-        n = len(price) - len(res)
-        pos_fits = [0] * n
-        neg_fits = [0] * n
-        pos_conf_lst = [0] * n
-        neg_conf_lst = [0] * n
-        for r in res:
-            pos_count = 0
-            neg_count = 0
-            pos_true_count = 0
-            neg_true_count = 0
-            for fits in r:
-                if fits['sign'] > 0:
-                    pos_count += 1
-                    if fits['qualified'][condition_name]:
-                        pos_true_count += 1
-                if fits['sign'] < 0:
-                    neg_count += 1
-                    if fits['qualified'][condition_name]:
-                        neg_true_count = neg_true_count + 1
-            # pos_conf_lst.append(pos_true_count / len(r))
-            # neg_conf_lst.append(neg_true_count / len(r))
-            pos_conf_lst.append(pos_true_count / pos_count if pos_count > 0 else 0)
-            neg_conf_lst.append(neg_true_count / neg_count if neg_count > 0 else 0)
+        res_df = self.res_to_df(res, condition_name)
 
         fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(15, 12))
         fig.suptitle(title)
         # plot pos bubbles
         ax1_0 = ax1.twinx()
-        ax1.plot(price, color='black')
-        ax1_0.plot(pos_conf_lst, label='bubble indicator (pos)')
+        ax1.plot(res_df['price'].values, color='black')
+        ax1_0.plot(res_df['pos_conf'].values, label='bubble indicator (pos)')
 
         # plot neg bubbles
         ax2_0 = ax2.twinx()
-        ax2.plot(price, color='black')
-        ax2_0.plot(neg_conf_lst, label='bubble indicator (neg)')
+        ax2.plot(res_df['price'].values, color='black')
+        ax2_0.plot(res_df['neg_conf'].values, label='bubble indicator (neg)')
 
         # set grids
         ax1.grid(which='major', axis='both', linestyle='--')
@@ -329,3 +306,49 @@ class LPPLS(object):
         tc_init_min = t_last - pct_delta_min
         tc_init_max = t_last + pct_delta_max
         return tc_init_min, tc_init_max
+
+    def res_to_df(self, res, condition_name):
+        """
+        Args:
+            res (list): result from mp_compute_indicator
+            condition_name (str): the name you assigned to the filter condition in your config
+        Returns:
+            pd.DataFrame()
+        """
+        idx = self.observations[0, :]
+        price = self.observations[1, :]
+        n = len(price) - len(res)
+        # pos_fits = [0] * n
+        # neg_fits = [0] * n
+        pos_conf_lst = [0] * n
+        neg_conf_lst = [0] * n
+        fits_ = [0] * n
+
+        for r in res:
+            pos_count = 0
+            neg_count = 0
+            pos_true_count = 0
+            neg_true_count = 0
+            for fits in r:
+
+                if fits['sign'] > 0:
+                    pos_count += 1
+                    if fits['qualified'][condition_name]:
+                        pos_true_count += 1
+                if fits['sign'] < 0:
+                    neg_count += 1
+                    if fits['qualified'][condition_name]:
+                        neg_true_count = neg_true_count + 1
+            # pos_conf_lst.append(pos_true_count / len(r))
+            # neg_conf_lst.append(neg_true_count / len(r))
+            fits_.append(fits)
+            pos_conf_lst.append(pos_true_count / pos_count if pos_count > 0 else 0)
+            neg_conf_lst.append(neg_true_count / neg_count if neg_count > 0 else 0)
+
+        return pd.DataFrame({
+            'idx': idx,
+            'price': price,
+            'pos_conf': pos_conf_lst,
+            'neg_conf': neg_conf_lst,
+            'fit_params': fits_,
+        }).set_index('idx')
