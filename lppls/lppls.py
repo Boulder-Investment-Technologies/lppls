@@ -175,12 +175,12 @@ class LPPLS(object):
         # plot pos bubbles
         ax1_0 = ax1.twinx()
         ax1.plot(res_df['price'].values, color='black')
-        ax1_0.plot(res_df['pos_conf_lst'].values, label='bubble indicator (pos)')
+        ax1_0.plot(res_df['pos_conf'].values, label='bubble indicator (pos)')
 
         # plot neg bubbles
         ax2_0 = ax2.twinx()
         ax2.plot(res_df['price'].values, color='black')
-        ax2_0.plot(res_df['neg_conf_lst'].values, label='bubble indicator (neg)')
+        ax2_0.plot(res_df['neg_conf'].values, label='bubble indicator (neg)')
 
         # set grids
         ax1.grid(which='major', axis='both', linestyle='--')
