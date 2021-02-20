@@ -34,7 +34,7 @@ The model has three components representing a bubble. The first, ![LPPLS Term 1]
 Dependencies
 
 `lppls` requires:
- - Python (== 3.8)
+ - Python (>= 3.7)
  - Matplotlib (>= 3.1.1)
  - Numba (>= 0.51.2)
  - NumPy (>= 1.17.0)
