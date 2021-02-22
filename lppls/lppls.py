@@ -1,4 +1,3 @@
-import inspect
 import multiprocessing
 from matplotlib import pyplot as plt
 from numba import njit
