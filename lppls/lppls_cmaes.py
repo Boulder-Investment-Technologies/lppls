@@ -87,30 +87,3 @@ class LPPLSCMAES(LPPLS):
             self.coef_[coef] = eval(coef)
 
         return tc, m, w, a, b, c, c1, c2
-
-
-# if __name__ == '__main__':
-#     # read example dataset into df
-#     data = pd.read_csv('./data/AAPL.csv')
-#
-#     # convert index col to evenly spaced numbers over a specified interval
-#     time = np.linspace(0, len(data) - 1, len(data))
-#
-#     # create list of observation data, in this case,
-#     # daily adjusted close prices of the S&P 500
-#     # use log price
-#     price = np.log(data['Adj Close'].values)
-#
-#     # create Mx2 matrix (expected format for LPPLS observations)
-#     observations = np.array([time, price])
-#
-#     # instantiate a new LPPLS model with the S&P 500 dataset
-#     lpplscmaes_model = LPPLSCMAES(observations=observations)
-#
-#     # fit the model to the data and get back the params
-#     tc, m, w, a, b, c, c1, c2 = lpplscmaes_model.optimize(max_iteration=2500, pop_size=4)
-#       tc, m, w, a, b, c, c1, c2
-#     # do hier some plotting stuff after the optimazation
-#     lpplscmaes_model.plot_fit()
-#     plt.savefig('opti_plot_fit.png')
-#     print(lpplscmaes_model.coef_.values())
