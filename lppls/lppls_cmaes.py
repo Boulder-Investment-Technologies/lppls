@@ -1,6 +1,6 @@
 import cma as cm
 from lppls.lppls import LPPLS
-import multiprocessing as mp
+# import multiprocessing as mp
 import numpy as np
 from scipy.stats import chisquare
 
@@ -21,7 +21,6 @@ class LPPLSCMAES(LPPLS):
         Returns:
             float: error of the objective function
         """
-        print(x)
         tc, m, w = x
         a, b, c1, c2 = super().matrix_equation(self.observations, tc, m, w)
 
