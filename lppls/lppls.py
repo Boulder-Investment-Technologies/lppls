@@ -149,7 +149,7 @@ class LPPLS(object):
             nothing, should plot the fit
         """
         tc, m, w, a, b, c, c1, c2 = self.coef_.values()
-        lppls_fit = [self.lppls(t, tc, m, w, a, b, c1, c2) for t in self.observations[0]]
+        lppls_fit = self.lppls(self.observations[0], tc, m, w, a, b, c1, c2)
 
         data = pd.DataFrame({
             'Time': self.observations[0],
