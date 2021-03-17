@@ -127,7 +127,24 @@ If you wish to store `res` as a pd.DataFrame, use `res_to_df`.
   
 </details>
 
+## Other Search Algorithms
+Shu and Zhu (2019) proposed [CMA-ES](https://en.wikipedia.org/wiki/CMA-ES) for identifying the best estimation of the three non-linear parameters (![Critical Time](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/latex/Critical_Time.svg), ![m](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/latex/m.svg), ![omega](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/latex/omega.svg)).
+> The CMA-ES rates among the most successful evolutionary
+algorithms for real-valued single-objective optimization and is typically applied to difficult
+nonlinear non-convex black-box optimization problems in continuous domain and search space
+dimensions between three and a hundred. Parallel computing is adopted to expedite the fitting
+process drastically.
+
+This approach has been implemented in a subclass and can be used as follows...
+Thanks to @paulogonc for the code.
+```python
+from lppls import lppls_cmaes
+lppls_model = lppls_cmaes.LPPLSCMAES(observations=observations)
+tc, m, w, a, b, c, c1, c2 = lppls_model.fit(max_iteration=2500, pop_size=4)
+```
+Performance Note: this works well for single fits but can take a long time for computing the confidence indicators. More work needs to be done to speed it up. 
 ## References
  - Filimonov, V. and Sornette, D. A Stable and Robust Calibration Scheme of the Log-Periodic Power Law Model. Physica A: Statistical Mechanics and its Applications. 2013
+ - Shu, M. and Zhu, W. Real-time Prediction of Bitcoin Bubble Crashes. 2019.
  - Sornette, D. Why Stock Markets Crash: Critical Events in Complex Financial Systems. Princeton University Press. 2002.
  - Sornette, D. and Demos, G. and Zhang, Q. and Cauwels, P. and Filimonov, V. and Zhang, Q., Real-Time Prediction and Post-Mortem Analysis of the Shanghai 2015 Stock Market Bubble and Crash (August 6, 2015). Swiss Finance Institute Research Paper No. 15-31.
