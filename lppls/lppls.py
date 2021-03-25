@@ -159,16 +159,14 @@ class LPPLS(object):
         data = data.set_index('Time')
         data.plot(figsize=(14, 8))
 
-    def plot_confidence_indicators(self, res, condition_name, title):
+    def plot_confidence_indicators(self, res_df, title):
         """
         Args:
-            res (list): result from mp_compute_indicator
-            condition_name (str): the name you assigned to the filter condition in your config
+            res_df (list): result from res_df(res, condition_name)
             title (str): super title for both subplots
         Returns:
             nothing, should plot the indicator
         """
-        res_df = self.res_to_df(res, condition_name)
 
         fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(15, 12))
         fig.suptitle(title)

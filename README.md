@@ -107,8 +107,8 @@ res = lppls_model.mp_compute_indicator(
     max_searches=25,
     filter_conditions_config=filter_conditions_config
 )
-
-lppls_model.plot_confidence_indicators(res, condition_name='condition_1', title='Short Term Indicator 120-30')
+res_df = self.res_to_df(res, 'condition_1')
+lppls_model.plot_confidence_indicators(res_df, title='Short Term Indicator 120-30')
 
 # should give a plot like the following...
 ```
