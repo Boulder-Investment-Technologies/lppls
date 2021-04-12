@@ -1,5 +1,6 @@
 ![PyPI 📦   ](https://github.com/Boulder-Investment-Technologies/lppls/workflows/PyPI%20%F0%9F%93%A6%20%20%20/badge.svg?branch=master)
 ![PyTests](https://github.com/Boulder-Investment-Technologies/lppls/workflows/PyTests/badge.svg?branch=master)
+[![Downloads](https://pepy.tech/badge/lppls)](https://pepy.tech/project/lppls)
 
 # Log Periodic Power Law Singularity (LPPLS) Model 
 `lppls` is a Python module for fitting the LPPLS model to data.
@@ -107,7 +108,7 @@ res = lppls_model.mp_compute_indicator(
     max_searches=25,
     filter_conditions_config=filter_conditions_config
 )
-res_df = self.res_to_df(res, 'condition_1')
+res_df = res_to_df(res, 'condition_1')
 lppls_model.plot_confidence_indicators(res_df, title='Short Term Indicator 120-30')
 
 # should give a plot like the following...
