@@ -256,17 +256,10 @@ class LPPLS(object):
                     tc_in_range = last - tc_init_min < tc < last + tc_init_max
                     m_in_range = m_min < m < m_max
                     w_in_range = w_min < w < w_max
-
                     O_in_range = ((w / (2 * np.pi)) * np.log(abs(tc / (tc - last)))) > O_min
+                    D_in_range = False if m <= 0 or w <= 0 else abs((m * b) / (w * c)) > D_min
 
-                    D_in_range = (m * abs(b)) / (w * abs(c)) > D_min if m > 0 and w > 0 else False
-
-                    if tc_in_range and m_in_range and w_in_range and O_in_range and D_in_range:
-                        is_qualified = True
-                    else:
-                        is_qualified = False
-
-                    qualified[value] = is_qualified
+                    qualified[value] = tc_in_range and m_in_range and w_in_range and O_in_range and D_in_range
 
             sign = 1 if b < 0 else -1
 
