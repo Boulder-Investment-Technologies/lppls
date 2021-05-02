@@ -1,4 +1,4 @@
-import multiprocessing
+from multiprocessing import Pool
 from matplotlib import pyplot as plt
 from numba import njit
 import numpy as np
@@ -211,13 +211,10 @@ class LPPLS(object):
             filter_conditions_config,
         ) for i in range(obs_copy_len)]
 
-        pool = multiprocessing.Pool(processes=workers)
+        with Pool(processes=workers):
+            self.indicator_result = pool.map(func, func_arg_map)
 
-        result = pool.map(func, func_arg_map)
-        pool.close()
-
-        self.indicator_result = result
-        return result
+        return self.indicator_result
 
     def _func_compute_indicator(self, args):
 
