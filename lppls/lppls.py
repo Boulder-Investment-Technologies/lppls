@@ -211,7 +211,7 @@ class LPPLS(object):
             filter_conditions_config,
         ) for i in range(obs_copy_len)]
 
-        with Pool(processes=workers):
+        with Pool(processes=workers) as pool:
             self.indicator_result = pool.map(func, func_arg_map)
 
         return self.indicator_result
