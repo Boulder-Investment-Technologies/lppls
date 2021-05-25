@@ -86,3 +86,62 @@ def test_matrix_equation(observations, lppls_model):
     lin_vals = lppls_model.matrix_equation(observations, tc, m, w)
     assert (np.round(lin_vals, 10) == np.round(
         [4123.919805408301, -333.7726805698412, -12.107142946248267, -1.8589644488871784], 10)).all()
+
+def test__is_O_in_range(lppls_model):
+
+    # Case 1, True
+    tc = 1000
+    w = 9.8
+    last = 800
+    O_min = 2.5
+    assert lppls_model._is_O_in_range(tc, w, last, O_min) == True
+
+    # Case 2, False
+    tc = 1000
+    w = 9.7
+    last = 800
+    O_min = 2.5
+    assert lppls_model._is_O_in_range(tc, w, last, O_min) == False
+
+def test__is_D_in_range(lppls_model):
+
+    # Case 1, True
+    m = 0.5
+    w = 9.8
+    b = 3000
+    c = 100
+    D_min = 1.0
+    # abs((m * b) / (w * c))
+    assert lppls_model._is_D_in_range(m, w, b, c, D_min) == True
+
+    # Case 2, False
+    m = 0.5
+    w = 9.8
+    b = 1000
+    c = 100
+    D_min
+    assert lppls_model._is_D_in_range(m, w, b, c, D_min) == False
+
+    # Case 3, m = 0
+    m = 0
+    w = 9.8
+    b = 1000
+    c = 100
+    D_min
+    assert lppls_model._is_D_in_range(m, w, b, c, D_min) == False
+
+    # Case 4, w = 0
+    m = 0.5
+    w = 0
+    b = 1000
+    c = 100
+    D_min
+    assert lppls_model._is_D_in_range(m, w, b, c, D_min) == False
+
+    # Case 5, m = 0 and w = 0
+    m = 0
+    w = 0
+    b = 1000
+    c = 100
+    D_min
+    assert lppls_model._is_D_in_range(m, w, b, c, D_min) == False

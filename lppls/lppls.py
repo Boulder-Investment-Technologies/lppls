@@ -256,8 +256,8 @@ class LPPLS(object):
                     tc_in_range = last - tc_init_min < tc < last + tc_init_max
                     m_in_range = m_min < m < m_max
                     w_in_range = w_min < w < w_max
-                    O_in_range = ((w / (2 * np.pi)) * np.log(abs(tc / (tc - last)))) > O_min
-                    D_in_range = False if m <= 0 or w <= 0 else abs((m * b) / (w * c)) > D_min
+                    O_in_range = self._is_O_in_range(tc, w, last, O_min)
+                    D_in_range = self._is_D_in_range(m, w, b, c, D_min)
 
                     qualified[value] = tc_in_range and m_in_range and w_in_range and O_in_range and D_in_range
 
@@ -343,3 +343,9 @@ class LPPLS(object):
             'neg_conf': neg_conf_lst,
             'fit_params': fits_,
         }).set_index('idx')
+
+    def _is_O_in_range(self, tc, w, last, O_min):
+        return ((w / (2 * np.pi)) * np.log(abs(tc / (tc - last)))) > O_min
+
+    def _is_D_in_range(self, m, w, b, c, D_min):
+        return False if m <= 0 or w <= 0 else abs((m * b) / (w * c)) > D_min
