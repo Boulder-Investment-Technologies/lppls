@@ -1,4 +1,4 @@
-import multiprocessing
+from multiprocessing import Pool
 from matplotlib import pyplot as plt
 from numba import njit
 import numpy as np
@@ -211,13 +211,10 @@ class LPPLS(object):
             filter_conditions_config,
         ) for i in range(obs_copy_len)]
 
-        pool = multiprocessing.Pool(processes=workers)
+        with Pool(processes=workers) as pool:
+            self.indicator_result = pool.map(func, func_arg_map)
 
-        result = pool.map(func, func_arg_map)
-        pool.close()
-
-        self.indicator_result = result
-        return result
+        return self.indicator_result
 
     def _func_compute_indicator(self, args):
 
@@ -259,17 +256,10 @@ class LPPLS(object):
                     tc_in_range = last - tc_init_min < tc < last + tc_init_max
                     m_in_range = m_min < m < m_max
                     w_in_range = w_min < w < w_max
+                    O_in_range = self._is_O_in_range(tc, w, last, O_min)
+                    D_in_range = self._is_D_in_range(m, w, b, c, D_min)
 
-                    O_in_range = ((w / (2 * np.pi)) * np.log(abs(tc / (tc - last)))) > O_min
-
-                    D_in_range = (m * abs(b)) / (w * abs(c)) > D_min if m > 0 and w > 0 else False
-
-                    if tc_in_range and m_in_range and w_in_range and O_in_range and D_in_range:
-                        is_qualified = True
-                    else:
-                        is_qualified = False
-
-                    qualified[value] = is_qualified
+                    qualified[value] = tc_in_range and m_in_range and w_in_range and O_in_range and D_in_range
 
             sign = 1 if b < 0 else -1
 
@@ -353,3 +343,9 @@ class LPPLS(object):
             'neg_conf': neg_conf_lst,
             'fit_params': fits_,
         }).set_index('idx')
+
+    def _is_O_in_range(self, tc, w, last, O_min):
+        return ((w / (2 * np.pi)) * np.log(abs(tc / (tc - last)))) > O_min
+
+    def _is_D_in_range(self, m, w, b, c, D_min):
+        return False if m <= 0 or w <= 0 else abs((m * b) / (w * c)) > D_min
