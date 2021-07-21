@@ -330,6 +330,7 @@ class LPPLS(object):
                     neg_count += 1
                     if fits['qualified'][condition_name]:
                         neg_true_count = neg_true_count + 1
+                # take total number of fits...
                 # pos_conf_lst.append(pos_true_count / len(r))
                 # neg_conf_lst.append(neg_true_count / len(r))
                 fits_.append(fits)
