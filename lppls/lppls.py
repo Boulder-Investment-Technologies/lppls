@@ -320,6 +320,7 @@ class LPPLS(object):
             neg_count = 0
             pos_true_count = 0
             neg_true_count = 0
+            acc_fits = []
             for fits in r:
 
                 if fits['sign'] > 0:
@@ -330,10 +331,11 @@ class LPPLS(object):
                     neg_count += 1
                     if fits['qualified'][condition_name]:
                         neg_true_count = neg_true_count + 1
-                # take total number of fits...
-                # pos_conf_lst.append(pos_true_count / len(r))
-                # neg_conf_lst.append(neg_true_count / len(r))
-                fits_.append(fits)
+                acc_fits.append(fits)
+            # take total number of fits...
+            # pos_conf_lst.append(pos_true_count / len(r))
+            # neg_conf_lst.append(neg_true_count / len(r))
+            fits_.append(acc_fits)
             pos_conf_lst.append(pos_true_count / pos_count if pos_count > 0 else 0)
             neg_conf_lst.append(neg_true_count / neg_count if neg_count > 0 else 0)
 
