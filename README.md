@@ -114,7 +114,7 @@ lppls_model.plot_confidence_indicators(res)
 ```
 ![LPPLS Confidnce Indicator](img/dotcom_confidence_indicator.png)
 
-If you wish to store `res` as a pd.DataFrame, use `res_to_df`.
+If you wish to store `res` as a pd.DataFrame, use `compute_indicator`.
 <details>
   <summary>Example</summary>
 
@@ -123,7 +123,7 @@ If you wish to store `res` as a pd.DataFrame, use `res_to_df`.
   res_df.tail()
   # gives the following...
   ```
-  <img src="img/compute_indicator.png"  width="500"/>
+  <img src="img/compute_indicator_df.png"  width="500"/>
   
 </details>
 
