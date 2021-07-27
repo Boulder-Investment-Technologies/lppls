@@ -510,56 +510,6 @@ class LPPLS(object):
         tc_init_max = t_last + pct_delta_max
         return tc_init_min, tc_init_max
 
-    # def res_to_df(self, res, condition_name):
-    #     """
-    #     Args:
-    #         res (list): result from mp_compute_indicator
-    #         condition_name (str): the name you assigned to the filter condition in your config
-    #     Returns:
-    #         pd.DataFrame()
-    #     """
-    #     idx = self.observations[0, :]
-    #     price = self.observations[1, :]
-    #     n = len(price) - len(res)
-    #     # pos_fits = [0] * n
-    #     # neg_fits = [0] * n
-    #     pos_conf_lst = [0] * n
-    #     neg_conf_lst = [0] * n
-    #     fits_ = [0] * n
-    #
-    #     for r in res:
-    #         pos_count = 0
-    #         neg_count = 0
-    #         pos_true_count = 0
-    #         neg_true_count = 0
-    #         acc_fits = []
-    #         print(r)
-    #         for fits in r:
-    #
-    #             if fits['sign'] > 0:
-    #                 pos_count += 1
-    #                 if fits['qualified'][condition_name]:
-    #                     pos_true_count += 1
-    #             if fits['sign'] < 0:
-    #                 neg_count += 1
-    #                 if fits['qualified'][condition_name]:
-    #                     neg_true_count = neg_true_count + 1
-    #             acc_fits.append(fits)
-    #         # take total number of fits...
-    #         # pos_conf_lst.append(pos_true_count / len(r))
-    #         # neg_conf_lst.append(neg_true_count / len(r))
-    #         fits_.append(acc_fits)
-    #         pos_conf_lst.append(pos_true_count / pos_count if pos_count > 0 else 0)
-    #         neg_conf_lst.append(neg_true_count / neg_count if neg_count > 0 else 0)
-    #
-    #     return pd.DataFrame({
-    #         'idx': idx,
-    #         'price': price,
-    #         'pos_conf': pos_conf_lst,
-    #         'neg_conf': neg_conf_lst,
-    #         'fit_params': fits_,
-    #     }).set_index('idx')
-
     def _is_O_in_range(self, tc, w, last, O_min):
         return ((w / (2 * np.pi)) * np.log(abs(tc / (tc - last)))) > O_min
 
