@@ -109,7 +109,7 @@ If you wish to store `res` as a pd.DataFrame, use `compute_indicator`.
 
   ```python
   res_df = lppls_model.compute_indicator(res)
-  res_df.tail()
+  res_df
   # gives the following...
   ```
   <img src="img/compute_indicator_df.png"  width="500"/>
