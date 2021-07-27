@@ -93,12 +93,7 @@ class LPPLSCMAES(LPPLS):
         t1 = obs[0, 0]
         t2 = obs[0, -1]
         if es.result.xbest is not None:
-            print('es.result.xbest', es.result.xbest)
             tc, m, w = es.result.xbest
-            print('check tyes')
-            print(tc)
-            print(m)
-            print(w)
             try:
                 rM = super().matrix_equation(obs, tc, m, w)
                 a, b, c1, c2 = rM[:, 0].tolist()
