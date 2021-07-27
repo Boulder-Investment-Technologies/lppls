@@ -62,17 +62,17 @@ data = data_loader.nasdaq_dotcom()
 # convert time to ordinal
 time = [pd.Timestamp.toordinal(dt.strptime(t1, '%Y-%m-%d')) for t1 in data['Date']]
 
-# create list of observation data, in this case, 
+# create list of observation data
 price = np.log(data['Adj Close'].values)
 
-# create Mx2 matrix (expected format for LPPLS observations)
+# create observations array (expected format for LPPLS observations)
 observations = np.array([time, price])
 
 # set the max number for searches to perform before giving-up
 # the literature suggests 25
 MAX_SEARCHES = 25
 
-# instantiate a new LPPLS model with the S&P 500 dataset
+# instantiate a new LPPLS model with the Nasdaq Dot-com bubble dataset
 lppls_model = lppls.LPPLS(observations=observations)
 
 # fit the model to the data and get back the params
@@ -87,17 +87,6 @@ lppls_model.plot_fit()
 ![LPPLS Fit to the S&P500 Dataset](img/dotcom_lppls_fit.png)
 
 ```python
-# define custom filter condition
-filter_conditions_config = [
-  {'condition_1':[
-      (0.0, 0.1), # tc_range
-      (0,1), # m_range
-      (4,25), # w_range
-      2.5, # O_min
-      0.5, # D_min
-  ]},
-]
-
 # compute the confidence indicator
 res = lppls_model.mp_compute_nested_fits(
     workers=8,
@@ -106,7 +95,7 @@ res = lppls_model.mp_compute_nested_fits(
     outer_increment=1, 
     inner_increment=5, 
     max_searches=25,
-    filter_conditions_config={} # not implemented in 0.6.x
+    # filter_conditions_config={} # not implemented in 0.6.x
 )
 
 lppls_model.plot_confidence_indicators(res)
@@ -119,7 +108,7 @@ If you wish to store `res` as a pd.DataFrame, use `compute_indicator`.
   <summary>Example</summary>
 
   ```python
-  res_df = lppls_model.compute_indicator(res, condition_name='condition_1')
+  res_df = lppls_model.compute_indicator(res)
   res_df.tail()
   # gives the following...
   ```
