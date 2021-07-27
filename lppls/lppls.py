@@ -349,9 +349,9 @@ class LPPLS(object):
         res_df = self.compute_indicators(res)
         # print(res_df)
         fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(18, 10))
-        fig.suptitle(
-            'Qualified Fit Boundaries: {\'ml\': 0.01, \'mu\': 0.99, \'wl\': 2.1, \'wu\': 14.9, \'oscl\': 2.5, \'Dl\': 0.5, \'tcl\': 0.99, \'tcu\': 0.99}',
-            fontsize=16)
+        # fig.suptitle(
+        #     'Qualified Fit Boundaries: {\'ml\': 0.01, \'mu\': 0.99, \'wl\': 2.1, \'wu\': 14.9, \'oscl\': 2.5, \'Dl\': 0.5, \'tcl\': 0.99, \'tcu\': 0.99}',
+        #     fontsize=16)
 
         ord = res_df['time_ord'].astype('int32')
         ts = [pd.Timestamp.fromordinal(d) for d in ord]
