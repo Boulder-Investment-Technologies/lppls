@@ -53,31 +53,30 @@ pip install -U lppls
 from lppls import lppls, data_loader
 import numpy as np
 import pandas as pd
+from datetime import datetime as dt
 %matplotlib inline
 
 # read example dataset into df 
-data = data_loader.sp500()
+data = data_loader.nasdaq_dotcom()
 
-# convert index col to evenly spaced numbers over a specified interval
-time = np.linspace(0, len(data)-1, len(data))
+# convert time to ordinal
+time = [pd.Timestamp.toordinal(dt.strptime(t1, '%Y-%m-%d')) for t1 in data['Date']]
 
-# create list of observation data, in this case, 
-# daily adjusted close prices of the S&P 500
-# use log price
+# create list of observation data
 price = np.log(data['Adj Close'].values)
 
-# create Mx2 matrix (expected format for LPPLS observations)
+# create observations array (expected format for LPPLS observations)
 observations = np.array([time, price])
 
 # set the max number for searches to perform before giving-up
 # the literature suggests 25
 MAX_SEARCHES = 25
 
-# instantiate a new LPPLS model with the S&P 500 dataset
+# instantiate a new LPPLS model with the Nasdaq Dot-com bubble dataset
 lppls_model = lppls.LPPLS(observations=observations)
 
 # fit the model to the data and get back the params
-tc, m, w, a, b, c, c1, c2 = lppls_model.fit(observations, MAX_SEARCHES, minimizer='Nelder-Mead')
+tc, m, w, a, b, c, c1, c2, O, D = lppls_model.fit(MAX_SEARCHES)
 
 # visualize the fit
 lppls_model.plot_fit()
@@ -85,46 +84,35 @@ lppls_model.plot_fit()
 # should give a plot like the following...
 ```
 
-![LPPLS Fit to the S&P500 Dataset](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/sp500_lppls_fit.png)
+![LPPLS Fit to the S&P500 Dataset](img/dotcom_lppls_fit.png)
 
 ```python
-# define custom filter condition
-filter_conditions_config = [
-  {'condition_1':[
-      (0.0, 0.1), # tc_range
-      (0,1), # m_range
-      (4,25), # w_range
-      2.5, # O_min
-      0.5, # D_min
-  ]},
-]
-
 # compute the confidence indicator
-res = lppls_model.mp_compute_indicator(
-    workers=4, 
+res = lppls_model.mp_compute_nested_fits(
+    workers=8,
     window_size=120, 
     smallest_window_size=30, 
-    increment=5, 
+    outer_increment=1, 
+    inner_increment=5, 
     max_searches=25,
-    filter_conditions_config=filter_conditions_config
+    # filter_conditions_config={} # not implemented in 0.6.x
 )
-res_df = lppls_model.res_to_df(res, 'condition_1')
-lppls_model.plot_confidence_indicators(res_df, title='Short Term Indicator 120-30')
 
+lppls_model.plot_confidence_indicators(res)
 # should give a plot like the following...
 ```
-![LPPLS Confidnce Indicator](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/sp500_confidence_indicator.png)
+![LPPLS Confidnce Indicator](img/dotcom_confidence_indicator.png)
 
-If you wish to store `res` as a pd.DataFrame, use `res_to_df`.
+If you wish to store `res` as a pd.DataFrame, use `compute_indicator`.
 <details>
   <summary>Example</summary>
 
   ```python
-  res_df = lppls_model.res_to_df(res, condition_name='condition_1')
-  res_df.tail()
+  res_df = lppls_model.compute_indicator(res)
+  res_df
   # gives the following...
   ```
-  <img src="https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/res_to_df.png"  width="500"/>
+  <img src="img/compute_indicator_df.png"  width="500"/>
   
 </details>
 
@@ -141,7 +129,7 @@ Thanks to @paulogonc for the code.
 ```python
 from lppls import lppls_cmaes
 lppls_model = lppls_cmaes.LPPLSCMAES(observations=observations)
-tc, m, w, a, b, c, c1, c2 = lppls_model.fit(max_iteration=2500, pop_size=4)
+tc, m, w, a, b, c, c1, c2, O, D = lppls_model.fit(max_iteration=2500, pop_size=4)
 ```
 Performance Note: this works well for single fits but can take a long time for computing the confidence indicators. More work needs to be done to speed it up. 
 ## References
