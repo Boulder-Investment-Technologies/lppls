@@ -84,7 +84,7 @@ lppls_model.plot_fit()
 # should give a plot like the following...
 ```
 
-![LPPLS Fit to the S&P500 Dataset](img/dotcom_lppls_fit.png)
+![LPPLS Fit to the Nasdaq Dataset](https://raw.githubusercontent.com/Boulder-Investment-Technologies/lppls/master/img/dotcom_lppls_fit.png)
 
 ```python
 # compute the confidence indicator
@@ -101,7 +101,7 @@ res = lppls_model.mp_compute_nested_fits(
 lppls_model.plot_confidence_indicators(res)
 # should give a plot like the following...
 ```
-![LPPLS Confidnce Indicator](img/dotcom_confidence_indicator.png)
+![LPPLS Confidnce Indicator](https://raw.githubusercontent.com/Boulder-Investment-Technologies/lppls/master/img/dotcom_confidence_indicator.png)
 
 If you wish to store `res` as a pd.DataFrame, use `compute_indicator`.
 <details>
@@ -112,7 +112,7 @@ If you wish to store `res` as a pd.DataFrame, use `compute_indicator`.
   res_df
   # gives the following...
   ```
-  <img src="img/compute_indicator_df.png"  width="500"/>
+  <img src="https://raw.githubusercontent.com/Boulder-Investment-Technologies/lppls/master/img/compute_indicator_df.png"  width="500"/>
   
 </details>
 

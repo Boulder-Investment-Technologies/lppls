@@ -4,6 +4,8 @@ from numba import njit
 import numpy as np
 import pandas as pd
 import random
+# from datetime import datetime as date
+# from pandas._libs.tslibs.np_datetime import OutOfBoundsDatetime
 from scipy.optimize import minimize
 
 
@@ -139,8 +141,6 @@ class LPPLS(object):
             w = non_lin_vals[2]
             seed = np.array([tc, m, w])
 
-
-
             # Increment search count on SVD convergence error, but raise all other exceptions.
             try:
                 tc, m, w, a, b, c, c1, c2 = self.estimate_params(obs, seed, minimizer)
@@ -240,6 +240,7 @@ class LPPLS(object):
         neg_conf_lst = []
         price = []
         ts = []
+        _fits = []
 
         if filter_conditions_config is None:
             # TODO make configurable again!
@@ -258,11 +259,13 @@ class LPPLS(object):
             neg_qual_count = 0
             pos_count = 0
             neg_count = 0
+            _fits.append(r['res'])
 
             for fits in r['res']:
 
-
-
+                # t1 = pd.Timestamp.toordinal(fits['t1'])
+                # t2 = pd.Timestamp.toordinal(fits['t2'])
+                # tc = pd.Timestamp.toordinal(fits['tc'])
                 t1 = fits['t1']
                 t2 = fits['t2']
                 tc = fits['tc']
@@ -328,11 +331,11 @@ class LPPLS(object):
             # D_lst.append(D_cnt)
 
         res_df = pd.DataFrame({
-            'time_ord': ts,
+            'time': ts,
             'price': price,
             'pos_conf': pos_conf_lst,
             'neg_conf': neg_conf_lst,
-
+            '_fits': _fits,
         })
         return res_df
         # return ts, price, pos_lst, neg_lst, pos_conf_lst, neg_conf_lst, #tc_lst, m_lst, w_lst, O_lst, D_lst
@@ -353,7 +356,7 @@ class LPPLS(object):
         #     'Qualified Fit Boundaries: {\'ml\': 0.01, \'mu\': 0.99, \'wl\': 2.1, \'wu\': 14.9, \'oscl\': 2.5, \'Dl\': 0.5, \'tcl\': 0.99, \'tcu\': 0.99}',
         #     fontsize=16)
 
-        ord = res_df['time_ord'].astype('int32')
+        ord = res_df['time'].astype('int32')
         ts = [pd.Timestamp.fromordinal(d) for d in ord]
 
         # plot pos bubbles
@@ -466,16 +469,19 @@ class LPPLS(object):
             else:
                 tc, m, w, a, b, c, c1, c2, O, D = self.fit(max_searches, obs=obs_shrinking_slice)
 
-            sub_t1 = obs_shrinking_slice[0][0]
-            sub_t2 = obs_shrinking_slice[0][-1]
-            sub_p1 = obs_shrinking_slice[1][0]
-            sub_p2 = obs_shrinking_slice[1][-1]
+            nested_t1 = obs_shrinking_slice[0][0]
+            nested_t2 = obs_shrinking_slice[0][-1]
+            nested_p1 = obs_shrinking_slice[1][0]
+            nested_p2 = obs_shrinking_slice[1][-1]
+
+            # TODO consider rescaling data to be ∈ [0, 1] for perf?
             # if self.scale_obs:
             #     sub_t1 = self.inverse_transform_observations([[sub_t1, sub_p1]])[0, 0]
             #     sub_t2 = self.inverse_transform_observations([[sub_t2, sub_p2]])[0, 0]
             #     tc = self.inverse_transform_observations([[tc, 0]])[0, 0]
 
             res.append({
+                # 'tc': self.ordinal_to_date(tc),
                 'tc': tc,
                 'm': m,
                 'w': w,
@@ -484,12 +490,15 @@ class LPPLS(object):
                 'c': c,
                 'c1': c1,
                 'c2': c2,
-                't1': sub_t1,
-                't2': sub_t2,
+                # 't1': self.ordinal_to_date(nested_t1),
+                # 't2': self.ordinal_to_date(nested_t2),
+                't1': nested_t1,
+                't2': nested_t2,
                 'O': O,
                 'D': D,
             })
 
+        # return {'t1': self.ordinal_to_date(t1), 't2': self.ordinal_to_date(t2), 'p2': p2, 'res': res}
         return {'t1': t1, 't2': t2, 'p2': p2, 'res': res}
 
     def _get_tc_bounds(self, obs, lower_bound_pct, upper_bound_pct):
@@ -523,8 +532,17 @@ class LPPLS(object):
         return (m * np.abs(b)) / (w * np.abs(c))
 
     def get_c(self, c1, c2):
-        # c = (c1 ** 2 + c2 ** 2) ** 0.5
         if c1 and c2:
+            # c = (c1 ** 2 + c2 ** 2) ** 0.5
             return c1 / np.cos(np.arctan(c2 / c1))
         else:
             return 0
+
+    # def ordinal_to_date(self, ordinal):
+    #     # Since pandas represents timestamps in nanosecond resolution,
+    #     # the time span that can be represented using a 64-bit integer
+    #     # is limited to approximately 584 years
+    #     try:
+    #         return date.fromordinal(int(ordinal))
+    #     except (ValueError, OutOfBoundsDatetime):
+    #         return pd.NaT
