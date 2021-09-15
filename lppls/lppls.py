@@ -8,6 +8,7 @@ import random
 # from pandas._libs.tslibs.np_datetime import OutOfBoundsDatetime
 from scipy.optimize import minimize
 from tqdm import tqdm
+import xarray as xr
 
 class LPPLS(object):
 
@@ -428,11 +429,36 @@ class LPPLS(object):
 
         return self.indicator_result
 
+    def compute_nested_fits(self, window_size=80, smallest_window_size=20, outer_increment=5, inner_increment=2, max_searches=25):
+        obs_copy = self.observations
+        obs_copy_len = len(obs_copy[0]) - window_size
+        window_delta = window_size - smallest_window_size
+        res = []
+        i_idx = 0
+        for i in range(0, obs_copy_len + 1, outer_increment):
+            j_idx = 0
+            obs = obs_copy[:, i:window_size + i]
+            t1 = obs[0][0]
+            t2 = obs[0][-1]
+            res.append([])
+            i_idx += 1
+            for j in range(0, window_delta, inner_increment):
+                obs_shrinking_slice = obs[:, j:window_size]
+                tc, m, w, a, b, c, c1, c2, O, D = self.fit(max_searches, obs=obs_shrinking_slice)
+                res[i_idx-1].append([])
+                j_idx += 1
+                for k in [t2, t1, a, b, c, m, 0, tc]:
+                    res[i_idx-1][j_idx-1].append(k)
+        return xr.DataArray(
+            data=res,
+            dims=('time', 'windowsize', 'params'),
+        )
+
     def _func_compute_nested_fits(self, args):
 
         obs, window_size, n_iter, smallest_window_size, outer_increment, inner_increment, max_searches = args
 
-        n_fits = window_size - smallest_window_size
+        window_delta = window_size - smallest_window_size
 
         res = []
 
@@ -459,7 +485,7 @@ class LPPLS(object):
                     # qualified[value] = tc_in_range and m_in_range and w_in_range and O_in_range and D_in_range
 
         # run n fits on the observation slice.
-        for j in range(0, n_fits, inner_increment):
+        for j in range(0, window_delta, inner_increment):
             obs_shrinking_slice = obs[:, j:window_size]
 
             # fit the model to the data and get back the params
