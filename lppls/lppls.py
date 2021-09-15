@@ -65,7 +65,7 @@ class LPPLS(object):
         P = observations[1]
         N = len(T)
 
-        # @TODO make taking tc - t or |tc - t| configurable
+        # @TODO make taking tc - t or |tc - t| configurable, note that tc - t can throw errors
         dT = np.abs(tc - T)
         phase = np.log(dT)
 
@@ -127,8 +127,8 @@ class LPPLS(object):
             # @TODO make configurable
             # set random initialization limits for non-linear params
             init_limits = [
-                (max(t2 - 60, t2 - 0.5 * (t2 - t1)), min(t2 + 252, t2 + 0.5 * (t2 - t1))),  # tc
-                # (tc_init_min, tc_init_max),
+                # (max(t2 - 60, t2 - 0.5 * (t2 - t1)), min(t2 + 252, t2 + 0.5 * (t2 - t1))),  # tc
+                (tc_init_min, tc_init_max),
                 (0.0, 1.0),  # m
                 (2.0, 15.0),  # ω
             ]
@@ -167,7 +167,8 @@ class LPPLS(object):
             args=observations,
             fun=self.func_restricted,
             x0=seed,
-            method=minimizer
+            method=minimizer,
+            # tol=1e-3
         )
 
         if cofs.success:
@@ -206,11 +207,11 @@ class LPPLS(object):
         lppls_fit = [self.lppls(t, tc, m, w, a, b, c1, c2) for t in t_obs]
         price = self.observations[1, :]
 
-        first = t_obs[0]
-        last = t_obs[-1]
+        # first = t_obs[0]
+        # last = t_obs[-1]
 
-        O = ((w / (2.0 * np.pi)) * np.log((tc - first) / (tc - last)))
-        D = (m * np.abs(b)) / (w * np.abs(c))
+        # O = ((w / (2.0 * np.pi)) * np.log((tc - first) / (tc - last)))
+        # D = (m * np.abs(b)) / (w * np.abs(c))
 
         fig, (ax1) = plt.subplots(nrows=1, ncols=1, sharex=True, figsize=(14, 8))
         # fig.suptitle(
@@ -218,7 +219,7 @@ class LPPLS(object):
         #     fontsize=16)
 
         ax1.plot(time_ord, price, label='price', color='black', linewidth=0.75)
-        ax1.plot(time_ord, lppls_fit, label='lppls fit', color='blue', alpha=0.5)
+        ax1.plot(time_ord, lppls_fit, label='lppls fit', color='red', alpha=0.5)
         # if show_tc:
         #     ax1.axvline(x=np.array(tc_ts, dtype=np.datetime64), label='tc={}'.format(ts), color='red', alpha=0.5)
         # set grids
@@ -233,25 +234,71 @@ class LPPLS(object):
         # # axes up to make room for them
         # fig.autofmt_xdate()
 
-    def compute_indicators(self, res, filter_conditions_config=None):
-        pos_lst = []
-        neg_lst = []
-        pos_conf_lst = []
-        neg_conf_lst = []
-        price = []
-        ts = []
-        _fits = []
+    def compute_indicators(self, res, conf_denominator='all', filter_conditions_config=None):
+        """
+        Args:
+            res (pd.DataFrame):
+            conf_denominator (enum string):
+            filter_conditions_config (dict):
+        Returns:
+            res_df (pd.DataFrame)
+        """
+        col_acc = {}
+        # default_res_columns = ['time', 'price', '_fits']
 
         if filter_conditions_config is None:
-            # TODO make configurable again!
+            get_tc_min, get_tc_max = (self._get_tc_min, self._get_tc_max)
             m_min, m_max = (0.0, 1.0)
             w_min, w_max = (2.0, 15.0)
             O_min = 2.5
             D_min = 0.5
-        else:
-            # TODO parse user provided conditions
-            pass
 
+            ts, price, pos_conf_lst, neg_conf_lst, _fits = self._build_res(res, get_tc_min, get_tc_max, m_min, m_max,
+                                                                           w_min, w_max, O_min, D_min, conf_denominator)
+            col_acc['time'] = ts
+            col_acc['price'] = price
+            col_acc['pos_conf'] = pos_conf_lst
+            col_acc['neg_conf'] = neg_conf_lst
+            col_acc['_fits'] = _fits
+        else:
+
+            for condition in filter_conditions_config:
+                for key, value in condition.items():
+                    get_tc_min, get_tc_max = condition[key][0]
+                    m_min, m_max = condition[key][1]
+                    w_min, w_max = condition[key][2]
+                    O_min = condition[key][3]
+                    D_min = condition[key][4]
+
+
+                    print(get_tc_min, get_tc_max)
+                    print(m_min, m_max)
+                    print(w_min, w_max)
+                    print(O_min)
+                    print(D_min)
+
+                    ts, price, pos_conf_lst, neg_conf_lst, _fits = self._build_res(res, get_tc_min, get_tc_max, m_min,
+                                                                                   m_max, w_min, w_max, O_min, D_min,
+                                                                                   conf_denominator)
+                    if 'time' not in col_acc.keys():
+                        col_acc['time'] = ts
+                    if 'price' not in col_acc.keys():
+                        col_acc['price'] = price
+                    if '_fits' not in col_acc.keys():
+                        col_acc['_fits'] = _fits
+
+                    col_acc[f'pos_{key}'] = pos_conf_lst
+                    col_acc[f'neg_{key}'] = neg_conf_lst
+
+        res_df = pd.DataFrame(col_acc)
+        return res_df
+
+    def _build_res(self, res, get_tc_min, get_tc_max, m_min, m_max, w_min, w_max, O_min, D_min, conf_denominator):
+        ts = []
+        price = []
+        pos_conf_lst = []
+        neg_conf_lst = []
+        _fits = []
         for r in res:
             ts.append(r['t2'])
             price.append(r['p2'])
@@ -290,7 +337,17 @@ class LPPLS(object):
                 # print('{} < {} < {}'.format(max(t2 - 60, t2 - 0.5 * (t2 - t1)), tc, min(t2 + 252, t2 + 0.5 * (t2 - t1))))
                 # print('______________')
 
-                tc_in_range = max(t2 - 60, t2 - 0.5 * (t2 - t1)) < tc < min(t2 + 252, t2 + 0.5 * (t2 - t1))
+                if hasattr(get_tc_min, '__call__'):
+                    tc_min = get_tc_min(t1, t2)
+                else:
+                    tc_min = self._get_tc_min(t1, t2, lower_bound_pct=get_tc_min)
+
+                if hasattr(get_tc_max, '__call__'):
+                    tc_max = get_tc_max(t1, t2)
+                else:
+                    tc_max = self._get_tc_max(t1, t2, upper_bound_pct=get_tc_max)
+
+                tc_in_range = tc_min < tc < tc_max
                 m_in_range = m_min < m < m_max
                 w_in_range = w_min < w < w_max
 
@@ -316,29 +373,17 @@ class LPPLS(object):
                     if is_qualified:
                         neg_qual_count += 1
 
-            pos_conf = pos_qual_count / pos_count if pos_count > 0 else 0
-            neg_conf = neg_qual_count / neg_count if neg_count > 0 else 0
+            if conf_denominator == 'strict':
+                pos_conf = pos_qual_count / pos_count if pos_count > 0 else 0
+                neg_conf = neg_qual_count / neg_count if neg_count > 0 else 0
+            else:
+                pos_conf = pos_qual_count / (pos_count + neg_count)
+                neg_conf = neg_qual_count / (pos_count + neg_count)
+
             pos_conf_lst.append(pos_conf)
             neg_conf_lst.append(neg_conf)
 
-            # pos_lst.append(pos_count / (pos_count + neg_count))
-            # neg_lst.append(neg_count / (pos_count + neg_count))
-
-            # tc_lst.append(tc_cnt)
-            # m_lst.append(m_cnt)
-            # w_lst.append(w_cnt)
-            # O_lst.append(O_cnt)
-            # D_lst.append(D_cnt)
-
-        res_df = pd.DataFrame({
-            'time': ts,
-            'price': price,
-            'pos_conf': pos_conf_lst,
-            'neg_conf': neg_conf_lst,
-            '_fits': _fits,
-        })
-        return res_df
-        # return ts, price, pos_lst, neg_lst, pos_conf_lst, neg_conf_lst, #tc_lst, m_lst, w_lst, O_lst, D_lst
+        return ts, price, pos_conf_lst, neg_conf_lst, _fits
 
     def plot_confidence_indicators(self, res):
         """
@@ -405,13 +450,10 @@ class LPPLS(object):
         # axes up to make room for them
         # fig.autofmt_xdate()
 
-    def mp_compute_nested_fits(self, workers, window_size=80, smallest_window_size=20, outer_increment=5, inner_increment=2, max_searches=25, filter_conditions_config={}):
+    def mp_compute_nested_fits(self, workers, window_size=80, smallest_window_size=20, outer_increment=5, inner_increment=2, max_searches=25):
         obs_copy = self.observations
-        obs_opy_len = len(obs_copy[0]) - window_size
+        obs_copy_len = len(obs_copy[0]) - window_size
         func = self._func_compute_nested_fits
-
-        # print('obs_copy', obs_copy)
-        # print('obs_opy_len', obs_opy_len)
 
         func_arg_map = [(
             obs_copy[:, i:window_size + i],
@@ -421,7 +463,7 @@ class LPPLS(object):
             outer_increment,
             inner_increment,
             max_searches,
-        ) for i in range(0, obs_opy_len+1, outer_increment)]
+        ) for i in range(0, obs_copy_len+1, outer_increment)]
 
         with Pool(processes=workers) as pool:
             self.indicator_result = pool.map(func, func_arg_map)
@@ -510,8 +552,8 @@ class LPPLS(object):
         Returns:
             tc_init_min, tc_init_max
         """
-        t_first = obs[0][0]
-        t_last = obs[0][-1]
+        t_first = obs[0][0] # t1
+        t_last = obs[0][-1] # t2
         t_delta = t_last - t_first
         pct_delta_min = t_delta * lower_bound_pct
         pct_delta_max = t_delta * upper_bound_pct
@@ -537,6 +579,17 @@ class LPPLS(object):
             return c1 / np.cos(np.arctan(c2 / c1))
         else:
             return 0
+
+    # define your own tc_min and tc_max functions
+    def _get_tc_min(self, t1, t2, lower_bound_pct):
+        d = t2 - t1
+        pct_d_min = d * lower_bound_pct
+        return t2 - pct_d_min
+
+    def _get_tc_max(self, t1, t2, upper_bound_pct):
+        d = t2 - t1
+        pct_d_min = d * upper_bound_pct
+        return t2 + pct_d_min
 
     # def ordinal_to_date(self, ordinal):
     #     # Since pandas represents timestamps in nanosecond resolution,
