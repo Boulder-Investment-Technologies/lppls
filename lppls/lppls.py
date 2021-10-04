@@ -429,7 +429,8 @@ class LPPLS(object):
 
         return self.indicator_result
 
-    def compute_nested_fits(self, window_size=80, smallest_window_size=20, outer_increment=5, inner_increment=2, max_searches=25):
+    def compute_nested_fits(self, window_size=80, smallest_window_size=20, outer_increment=5, inner_increment=2,
+                            max_searches=25):
         obs_copy = self.observations
         obs_copy_len = len(obs_copy[0]) - window_size
         window_delta = window_size - smallest_window_size
@@ -451,7 +452,12 @@ class LPPLS(object):
                     res[i_idx-1][j_idx-1].append(k)
         return xr.DataArray(
             data=res,
-            dims=('time', 'windowsize', 'params'),
+            dims=('t2', 'windowsizes', 'params'),
+            coords=dict(
+                        t2=obs_copy[0][(window_size-1):],
+                        windowsizes=range(smallest_window_size, window_size, inner_increment),
+                        params=['t2', 't1', 'a', 'b', 'c', 'm', '0', 'tc'],
+                        )
         )
 
     def _func_compute_nested_fits(self, args):
