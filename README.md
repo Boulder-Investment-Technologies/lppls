@@ -103,12 +103,12 @@ lppls_model.plot_confidence_indicators(res)
 ```
 ![LPPLS Confidnce Indicator](https://raw.githubusercontent.com/Boulder-Investment-Technologies/lppls/master/img/dotcom_confidence_indicator.png)
 
-If you wish to store `res` as a pd.DataFrame, use `compute_indicator`.
+If you wish to store `res` as a pd.DataFrame, use `compute_indicators`.
 <details>
   <summary>Example</summary>
 
   ```python
-  res_df = lppls_model.compute_indicator(res)
+  res_df = lppls_model.compute_indicators(res)
   res_df
   # gives the following...
   ```
