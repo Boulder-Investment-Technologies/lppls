@@ -13,6 +13,7 @@ def data():
 
 @pytest.fixture
 def observations(data):
+    data = data.head(100) # make it smaller so mp_compute_nested_fits runs faster
     time_ = np.linspace(0, len(data) - 1, len(data))
     price = [p for p in data['Adj Close']]
     return np.array([time_, price])
@@ -86,6 +87,16 @@ def test_matrix_equation(observations, lppls_model):
     lin_vals = lppls_model.matrix_equation(observations, tc, m, w)
     assert (np.round(lin_vals, 10) == np.round(
         [4123.919805408301, -333.7726805698412, -12.107142946248267, -1.8589644488871784], 10)).all()
+
+def test_mp_compute_nested_fits(observations, lppls_model):
+    res = lppls_model.mp_compute_nested_fits(workers=1)
+    assert len(res) == 5
+    assert res[0]['t1'] == 0.0
+    assert res[0]['t2'] == 79.0
+    assert res[4]['t1'] == 20.0
+    expected_keys = {'tc', 'm', 'w', 'a', 'b', 'c', 'c1', 'c2', 't1', 't2', 'O', 'D'}
+    assert len(res[0]['res']) == 30
+    assert set(res[0]['res'][0]).issubset(expected_keys)
 
 def test__is_O_in_range(lppls_model):
 
