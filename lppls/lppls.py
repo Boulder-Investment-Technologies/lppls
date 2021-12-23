@@ -7,7 +7,7 @@ import random
 # from datetime import datetime as date
 # from pandas._libs.tslibs.np_datetime import OutOfBoundsDatetime
 from scipy.optimize import minimize
-import tqdm
+from tqdm import tqdm
 
 class LPPLS(object):
 
@@ -424,7 +424,7 @@ class LPPLS(object):
         ) for i in range(0, obs_opy_len+1, outer_increment)]
 
         with Pool(processes=workers) as pool:
-            self.indicator_result = list(tqdm.tqdm(pool.imap(func, func_arg_map), total=len(func_arg_map)))
+            self.indicator_result = list(tqdm(pool.imap(func, func_arg_map), total=len(func_arg_map)))
 
         return self.indicator_result
 
