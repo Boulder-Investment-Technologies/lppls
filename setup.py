@@ -17,7 +17,8 @@ setuptools.setup(name='lppls',
           'pandas',
           'matplotlib',
           'scipy',
-          'xarray'
+          'xarray',
+          'cma'
       ],
       zip_safe=False,
       include_package_data=True,
