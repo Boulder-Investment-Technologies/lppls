@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(name='lppls',
-      version='0.6.4',
+      version='0.6.5',
       description='A Python module for fitting the LPPLS model to data.',
       packages=['lppls'],
       author='Josh Nielsen',
@@ -13,6 +13,13 @@ setuptools.setup(name='lppls',
       long_description_content_type='text/markdown',
       url='https://github.com/Boulder-Investment-Technologies/lppls',
       python_requires='>=3.7',
+      install_requires=[
+          'pandas',
+          'matplotlib',
+          'scipy',
+          'xarray',
+          'cma'
+      ],
       zip_safe=False,
       include_package_data=True,
       package_data={'': ['data/*.csv']},
