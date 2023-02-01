@@ -18,7 +18,9 @@ setuptools.setup(name='lppls',
           'matplotlib',
           'scipy',
           'xarray',
-          'cma'
+          'cma',
+          'tqdm',
+          'numba'
       ],
       zip_safe=False,
       include_package_data=True,
