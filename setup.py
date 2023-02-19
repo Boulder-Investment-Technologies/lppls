@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(name='lppls',
-      version='0.6.5',
+      version='0.6.6',
       description='A Python module for fitting the LPPLS model to data.',
       packages=['lppls'],
       author='Josh Nielsen',
@@ -18,7 +18,9 @@ setuptools.setup(name='lppls',
           'matplotlib',
           'scipy',
           'xarray',
-          'cma'
+          'cma',
+          'tqdm',
+          'numba'
       ],
       zip_safe=False,
       include_package_data=True,
