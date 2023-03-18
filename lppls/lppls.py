@@ -23,7 +23,7 @@ class LPPLS(object):
         self.observations = observations
         self.coef_ = {}
         self.indicator_result = []
-
+        print('sanity check!')
     @staticmethod
     @njit
     def lppls(t, tc, m, w, a, b, c1, c2):
@@ -147,6 +147,8 @@ class LPPLS(object):
                 tc, m, w, a, b, c, c1, c2 = self.estimate_params(obs, seed, minimizer)
                 O = self.get_oscillations(w, tc, t1, t2)
                 D = self.get_damping(m, w, b, c)
+                # @todo return residuals
+
                 return tc, m, w, a, b, c, c1, c2, O, D
             except Exception as e:
                 # print(e)
@@ -191,35 +193,49 @@ class LPPLS(object):
         else:
             raise UnboundLocalError
 
+    def get_model_fit_series(self):
+        tc, m, w, a, b, c, c1, c2 = self.coef_.values()
+        t_obs = self.observations[0, :]
+
+        time_series = [pd.Timestamp.fromordinal(d) for d in self.observations[0, :].astype('int32')]
+        lppls_fit_series = [self.lppls(t, tc, m, w, a, b, c1, c2) for t in t_obs]
+        price_series = self.observations[1, :]
+
+        return time_series, price_series, lppls_fit_series
+
+    def get_residuals_series(self):
+
+        time_series, price_series, lppls_fit_series = self.get_model_fit_series()
+
+        model_fit_df = pd.DataFrame({
+            'time_series': time_series,
+            'price_series': price_series,
+            'lppls_model_fit': lppls_fit_series
+        })
+
+        model_fit_df.set_index('time_series', inplace=True)
+
+        residuals = model_fit_df['price_series'] - model_fit_df['lppls_model_fit']
+
+        return residuals
+
     def plot_fit(self, show_tc=False):
         """
-        Args:
-            observations (Mx2 numpy array): the observed data
         Returns:
             nothing, should plot the fit
         """
-        tc, m, w, a, b, c, c1, c2 = self.coef_.values()
-        time_ord = [pd.Timestamp.fromordinal(d) for d in self.observations[0, :].astype('int32')]
-        t_obs = self.observations[0, :]
-        # ts = pd.to_datetime(t_obs*10**9)
-        # compatible_date = np.array(ts, dtype=np.datetime64)
 
-        lppls_fit = [self.lppls(t, tc, m, w, a, b, c1, c2) for t in t_obs]
-        price = self.observations[1, :]
+        time_series, price_series, lppls_fit_series = self.get_model_fit_series()
 
-        first = t_obs[0]
-        last = t_obs[-1]
+        # first = time_series[0]
+        # last = time_series[-1]
 
-        O = ((w / (2.0 * np.pi)) * np.log((tc - first) / (tc - last)))
-        D = (m * np.abs(b)) / (w * np.abs(c))
+        # O = ((w / (2.0 * np.pi)) * np.log((tc - first) / (tc - last)))
+        # D = (m * np.abs(b)) / (w * np.abs(c))
 
         fig, (ax1) = plt.subplots(nrows=1, ncols=1, sharex=True, figsize=(14, 8))
-        # fig.suptitle(
-        #     'Single Fit\ntc: {:.2f}, m: {:.2f}, w: {:.2f}, a: {:.2f}, b: {:.2f}, c: {:.2f}, O: {:.2f}, D: {:.2f}'.format(tc, m, w, a, b, c, O, D),
-        #     fontsize=16)
-
-        ax1.plot(time_ord, price, label='price', color='black', linewidth=0.75)
-        ax1.plot(time_ord, lppls_fit, label='lppls fit', color='blue', alpha=0.5)
+        ax1.plot(time_series, price_series, label='price', color='black', linewidth=0.75)
+        ax1.plot(time_series, lppls_fit_series, label='lppls fit', color='blue', alpha=0.5)
         # if show_tc:
         #     ax1.axvline(x=np.array(tc_ts, dtype=np.datetime64), label='tc={}'.format(ts), color='red', alpha=0.5)
         # set grids
@@ -227,12 +243,8 @@ class LPPLS(object):
         # set labels
         ax1.set_ylabel('ln(p)')
         ax1.legend(loc=2)
-
         plt.xticks(rotation=45)
-        # ax1.xaxis.set_major_formatter(months)
-        # # rotates and right aligns the x labels, and moves the bottom of the
-        # # axes up to make room for them
-        # fig.autofmt_xdate()
+
 
     def compute_indicators(self, res, filter_conditions_config=None):
         pos_lst = []
