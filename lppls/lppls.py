@@ -519,7 +519,7 @@ class LPPLS(object):
                 'c1': c1,
                 'c2': c2,
                 't1_d': self.ordinal_to_date(nested_t1),
-                't2_D': self.ordinal_to_date(nested_t2),
+                't2_d': self.ordinal_to_date(nested_t2),
                 't1': nested_t1,
                 't2': nested_t2,
                 'O': O,
