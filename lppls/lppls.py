@@ -4,8 +4,8 @@ from numba import njit
 import numpy as np
 import pandas as pd
 import random
-# from datetime import datetime as date
-# from pandas._libs.tslibs.np_datetime import OutOfBoundsDatetime
+from datetime import datetime as date
+from pandas._libs.tslibs.np_datetime import OutOfBoundsDatetime
 from scipy.optimize import minimize
 from tqdm import tqdm
 import xarray as xr
@@ -260,13 +260,9 @@ class LPPLS(object):
             neg_qual_count = 0
             pos_count = 0
             neg_count = 0
-            _fits.append(r['res'])
+            # _fits.append(r['res'])
 
-            for fits in r['res']:
-
-                # t1 = pd.Timestamp.toordinal(fits['t1'])
-                # t2 = pd.Timestamp.toordinal(fits['t2'])
-                # tc = pd.Timestamp.toordinal(fits['tc'])
+            for idx, fits in enumerate(r['res']):
                 t1 = fits['t1']
                 t2 = fits['t2']
                 tc = fits['tc']
@@ -316,6 +312,10 @@ class LPPLS(object):
                     neg_count += 1
                     if is_qualified:
                         neg_qual_count += 1
+                # add this to res to make life easier
+                r['res'][idx]['is_qualified'] = is_qualified
+
+            _fits.append(r['res'])
 
             pos_conf = pos_qual_count / pos_count if pos_count > 0 else 0
             neg_conf = neg_qual_count / neg_count if neg_count > 0 else 0
@@ -351,11 +351,7 @@ class LPPLS(object):
             nothing, should plot the indicator
         """
         res_df = self.compute_indicators(res)
-        # print(res_df)
         fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(18, 10))
-        # fig.suptitle(
-        #     'Qualified Fit Boundaries: {\'ml\': 0.01, \'mu\': 0.99, \'wl\': 2.1, \'wu\': 14.9, \'oscl\': 2.5, \'Dl\': 0.5, \'tcl\': 0.99, \'tcu\': 0.99}',
-        #     fontsize=16)
 
         ord = res_df['time'].astype('int32')
         ts = [pd.Timestamp.fromordinal(d) for d in ord]
@@ -513,7 +509,7 @@ class LPPLS(object):
             #     tc = self.inverse_transform_observations([[tc, 0]])[0, 0]
 
             res.append({
-                # 'tc': self.ordinal_to_date(tc),
+                'tc_d': self.ordinal_to_date(tc),
                 'tc': tc,
                 'm': m,
                 'w': w,
@@ -522,8 +518,8 @@ class LPPLS(object):
                 'c': c,
                 'c1': c1,
                 'c2': c2,
-                # 't1': self.ordinal_to_date(nested_t1),
-                # 't2': self.ordinal_to_date(nested_t2),
+                't1_d': self.ordinal_to_date(nested_t1),
+                't2_d': self.ordinal_to_date(nested_t2),
                 't1': nested_t1,
                 't2': nested_t2,
                 'O': O,
@@ -570,11 +566,11 @@ class LPPLS(object):
         else:
             return 0
 
-    # def ordinal_to_date(self, ordinal):
-    #     # Since pandas represents timestamps in nanosecond resolution,
-    #     # the time span that can be represented using a 64-bit integer
-    #     # is limited to approximately 584 years
-    #     try:
-    #         return date.fromordinal(int(ordinal))
-    #     except (ValueError, OutOfBoundsDatetime):
-    #         return pd.NaT
+    def ordinal_to_date(self, ordinal):
+        # Since pandas represents timestamps in nanosecond resolution,
+        # the time span that can be represented using a 64-bit integer
+        # is limited to approximately 584 years
+        try:
+            return date.fromordinal(int(ordinal))
+        except (ValueError, OutOfBoundsDatetime):
+            return pd.NaT
