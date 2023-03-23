@@ -509,7 +509,7 @@ class LPPLS(object):
             #     tc = self.inverse_transform_observations([[tc, 0]])[0, 0]
 
             res.append({
-                'tc_d': self.ordinal_to_date(tc).strftime('%Y-%m-%d'),
+                'tc_d': self.ordinal_to_date(tc),
                 'tc': tc,
                 'm': m,
                 'w': w,
@@ -518,8 +518,8 @@ class LPPLS(object):
                 'c': c,
                 'c1': c1,
                 'c2': c2,
-                't1_d': self.ordinal_to_date(nested_t1).strftime('%Y-%m-%d'),
-                't2_d': self.ordinal_to_date(nested_t2).strftime('%Y-%m-%d'),
+                't1_d': self.ordinal_to_date(nested_t1),
+                't2_d': self.ordinal_to_date(nested_t2),
                 't1': nested_t1,
                 't2': nested_t2,
                 'O': O,
@@ -571,6 +571,6 @@ class LPPLS(object):
         # the time span that can be represented using a 64-bit integer
         # is limited to approximately 584 years
         try:
-            return date.fromordinal(int(ordinal))
+            return date.fromordinal(int(ordinal)).strftime('%Y-%m-%d')
         except (ValueError, OutOfBoundsDatetime):
-            return pd.NaT
+            return str(pd.NaT)
