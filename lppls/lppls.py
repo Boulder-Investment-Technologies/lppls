@@ -571,6 +571,6 @@ class LPPLS(object):
         # the time span that can be represented using a 64-bit integer
         # is limited to approximately 584 years
         try:
-            return date.fromordinal(int(ordinal))
+            return date.fromordinal(int(ordinal)).strftime('%Y-%m-%d')
         except (ValueError, OutOfBoundsDatetime):
-            return pd.NaT
+            return str(pd.NaT)
