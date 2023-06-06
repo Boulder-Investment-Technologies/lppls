@@ -9,7 +9,7 @@
 ## Overview
 The LPPLS model provides a flexible framework to detect bubbles and predict regime changes of a financial asset. A bubble is defined as a faster-than-exponential increase in asset price, that reflects positive feedback loop of higher return anticipations competing with negative feedback spirals of crash expectations. It models a bubble price as a power law with a finite-time singularity decorated by oscillations with a frequency increasing with time. 
 
-🆕 The LPPLS Confidence Indicator (LPPLS CI), an indicator derived from the LPPLS model, is applied to both G7 and BRICS nations and has been made available as a digital resource. To experience and interact with the data visualization, one can access the platform hosted by Boulder Investment Technologies at ✨[signals.boulderinvestment.tech](https://signals.boulderinvestment.tech) ✨. 
+🆕 The LPPLS Confidence Indicator (LPPLS CI), an indicator derived from the LPPLS model, is applied to both G7 and BRICS nations and has been made available as a digital resource. To experience and interact with the data visualization, one can access the platform hosted by Boulder Investment Technologies at ✨[signals.boulderinvestment.tech](https://signals.boulderinvestment.tech)✨. 
 
 Here is the model:
 
@@ -121,7 +121,7 @@ If you wish to store `res` as a pd.DataFrame, use `compute_indicators`.
 </details>
 
 ## Other Search Algorithms
-Shu and Zhu (2019) proposed [CMA-ES](https://en.wikipedia.org/wiki/CMA-ES) for identifying the best estimation of the three non-linear parameters (![Critical Time](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/latex/Critical_Time.svg), ![m](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/latex/m.svg), ![omega](https://github.com/Boulder-Investment-Technologies/lppls/raw/master/img/latex/omega.svg)).
+Shu and Zhu (2019) proposed [CMA-ES](https://en.wikipedia.org/wiki/CMA-ES) for identifying the best estimation of the three non-linear parameters ($t_c$, $m$, $\omega$).
 > The CMA-ES rates among the most successful evolutionary
 algorithms for real-valued single-objective optimization and is typically applied to difficult
 nonlinear non-convex black-box optimization problems in continuous domain and search space
