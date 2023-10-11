@@ -9,6 +9,8 @@ from pandas._libs.tslibs.np_datetime import OutOfBoundsDatetime
 from scipy.optimize import minimize
 from tqdm import tqdm
 import xarray as xr
+from mpl_toolkits.mplot3d import Axes3D  # required for 3D plotting
+
 
 class LPPLS(object):
 
@@ -19,7 +21,7 @@ class LPPLS(object):
         """
         assert isinstance(observations, (np.ndarray, pd.DataFrame)), \
             f'Expected observations to be <pd.DataFrame> or <np.ndarray>, got :{type(observations)}'
-
+        print('hey 1')
         self.observations = observations
         self.coef_ = {}
         self.indicator_result = []
@@ -27,7 +29,7 @@ class LPPLS(object):
     @staticmethod
     @njit
     def lppls(t, tc, m, w, a, b, c1, c2):
-        return a + np.power(tc - t, m) * (b + ((c1 * np.cos(w * np.log(tc - t))) + (c2 * np.sin(w * np.log(tc - t)))))
+        return a + np.power(tc - t, m) * (b + ((c1 * np.cos(w * np.log(tc - t))) + (c2 * np.sin(w * (tc - t)))))
 
     def func_restricted(self, x, *args):
         """
@@ -50,6 +52,10 @@ class LPPLS(object):
         # print('type', type(res))
         # print('func_restricted', res)
 
+        # If the matrix equation method returned NaN values, return a high error value.
+        if np.isnan(a) or np.isnan(b) or np.isnan(c1) or np.isnan(c2):
+            return 1e10  # or any other high value
+
         delta = [self.lppls(t, tc, m, w, a, b, c1, c2) for t in observations[0, :]]
         delta = np.subtract(delta, observations[1, :])
         delta = np.power(delta, 2)
@@ -57,7 +63,6 @@ class LPPLS(object):
         return np.sum(delta)
 
     @staticmethod
-    @njit
     def matrix_equation(observations, tc, m, w):
         """
         Derive linear parameters in LPPLs from nonlinear ones.
@@ -68,7 +73,10 @@ class LPPLS(object):
 
         # @TODO make taking tc - t or |tc - t| configurable
         dT = np.abs(tc - T)
+
+        # print('dT', dT)
         phase = np.log(dT)
+        # print('phase', phase)
 
         fi = np.power(dT, m)
         gi = fi * np.cos(w * phase)
@@ -101,7 +109,14 @@ class LPPLS(object):
             [np.sum(yihi)]
         ])
 
-        return np.linalg.solve(matrix_1, matrix_2)
+        # Safe inversion using numpy's matrix inversion method
+        try:
+            inverted_matrix = np.linalg.inv(matrix_1)
+            result = np.dot(inverted_matrix, matrix_2)
+            return result
+        except np.linalg.LinAlgError:
+            # Return some default or NaN values
+            return np.array([[np.nan], [np.nan], [np.nan], [np.nan]])
 
     def fit(self, max_searches, minimizer='Nelder-Mead', obs=None):
         """
@@ -198,8 +213,11 @@ class LPPLS(object):
         Returns:
             nothing, should plot the fit
         """
+
+        # print('self.observations', self.observations)
+        print('self.coef_.values()', self.coef_.values())
         tc, m, w, a, b, c, c1, c2 = self.coef_.values()
-        time_ord = [pd.Timestamp.fromordinal(d) for d in self.observations[0, :].astype('int32')]
+        # time_ord = [pd.Timestamp.fromordinal(d) for d in self.observations[0, :].astype('int32')]
         t_obs = self.observations[0, :]
         # ts = pd.to_datetime(t_obs*10**9)
         # compatible_date = np.array(ts, dtype=np.datetime64)
@@ -218,8 +236,8 @@ class LPPLS(object):
         #     'Single Fit\ntc: {:.2f}, m: {:.2f}, w: {:.2f}, a: {:.2f}, b: {:.2f}, c: {:.2f}, O: {:.2f}, D: {:.2f}'.format(tc, m, w, a, b, c, O, D),
         #     fontsize=16)
 
-        ax1.plot(time_ord, price, label='price', color='black', linewidth=0.75)
-        ax1.plot(time_ord, lppls_fit, label='lppls fit', color='blue', alpha=0.5)
+        ax1.plot(self.observations[0, :], price, label='price', color='black', linewidth=0.75)
+        ax1.plot(self.observations[0, :], lppls_fit, label='lppls fit', color='blue', alpha=0.5)
         # if show_tc:
         #     ax1.axvline(x=np.array(tc_ts, dtype=np.datetime64), label='tc={}'.format(ts), color='red', alpha=0.5)
         # set grids
@@ -574,3 +592,90 @@ class LPPLS(object):
             return date.fromordinal(int(ordinal)).strftime('%Y-%m-%d')
         except (ValueError, OutOfBoundsDatetime):
             return str(pd.NaT)
+
+    def plot_cross_section_3D(self, param1, param2, grid_size=100):
+        """
+        Plot a 3D surface for two chosen parameters.
+
+        Args:
+            param1 (str): Name of the first parameter.
+            param2 (str): Name of the second parameter.
+            grid_size (int): Number of points in the grid for each parameter.
+        """
+        # print(self.coef_[param1])
+        # print(self.coef_[param2])
+
+        if not self.coef_:
+            raise ValueError("Please run the fit method to estimate the parameters first.")
+
+        t2 = len(self.observations[0])
+        # print('data_length', data_length)
+        # print('self.observations[0]', self.observations[0])
+        # window_length = int(6 * 30)  # Approximately 6 months, assuming 30 days per month
+
+        # print('_list', _list)
+
+        if param1 == 'tc':
+            param1_values = np.linspace(t2 + 1, t2 + 90, grid_size)
+            param2_values = np.linspace(self.coef_[param2] * 0.5, self.coef_[param2] * 1.5, grid_size)
+        elif param2 == 'tc':
+            param1_values = np.linspace(self.coef_[param1] * 0.5, self.coef_[param1] * 1.5, grid_size)
+            param2_values = np.linspace(t2 + 1, t2 + 90, grid_size)
+        else:
+            param1_values = np.linspace(self.coef_[param1] * 0.5, self.coef_[param1] * 1.5, grid_size)
+            param2_values = np.linspace(self.coef_[param2] * 0.5, self.coef_[param2] * 1.5, grid_size)
+        # print('param1_values', param1_values)
+        # print('param2_values', param2_values)
+
+
+        X, Y = np.meshgrid(param1_values, param2_values)
+
+        Z = np.empty(X.shape)
+
+        # for each grid point, compute the objective function value
+        for i in range(grid_size):
+            for j in range(grid_size):
+                seed_temp = np.array([self.coef_['tc'], self.coef_['m'], self.coef_['w']])
+                if param1 == 'tc':
+                    seed_temp[0] = X[i, j]
+                elif param1 == 'm':
+                    seed_temp[1] = X[i, j]
+                elif param1 == 'w':
+                    seed_temp[2] = X[i, j]
+
+                if param2 == 'tc':
+                    seed_temp[0] = Y[i, j]
+                elif param2 == 'm':
+                    seed_temp[1] = Y[i, j]
+                elif param2 == 'w':
+                    seed_temp[2] = Y[i, j]
+
+                obj_value = self.func_restricted(seed_temp, self.observations)
+
+                # if the matrix equation method returned NaN values, set a high error value.
+                if np.isnan(obj_value):
+                    Z[i, j] = 1e10  # or any other high value
+                else:
+                    Z[i, j] = obj_value
+
+        # find the third parameter that isn't being varied
+        all_params = ['tc', 'm', 'w']
+        all_params.remove(param1)
+        all_params.remove(param2)
+        fixed_param = all_params[0]
+
+        fig = plt.figure(figsize=(12, 8))
+        ax = fig.add_subplot(111, projection='3d')
+        surf = ax.plot_surface(X, Y, Z, cmap='viridis', rstride=1, cstride=1, antialiased=True)
+
+        ax.scatter(self.coef_[param1], self.coef_[param2],
+                   self.func_restricted([self.coef_['tc'], self.coef_['m'], self.coef_['w']], self.observations),
+                   color='red', s=100)
+
+
+        fig.colorbar(surf)
+        ax.set_xlabel(param1)
+        ax.set_ylabel(param2)
+        ax.set_zlabel('Objective Value')
+        ax.set_title(f"3D Surface of {param1} and {param2} with {fixed_param} = {self.coef_[fixed_param]:.4f}")
+        plt.show()
