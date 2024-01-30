@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(name='lppls',
-      version='0.6.10',
+      version='0.6.11',
       description='A Python module for fitting the LPPLS model to data.',
       packages=['lppls'],
       author='Josh Nielsen',
