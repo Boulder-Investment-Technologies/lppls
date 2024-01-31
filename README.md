@@ -120,6 +120,10 @@ If you wish to store `res` as a pd.DataFrame, use `compute_indicators`.
   
 </details>
 
+## Quantile Regression
+Based on the work in Zhang, Zhang & Sornette 2016, quantile regression for LPPLS uses the L1 norm (sum of absolute differences) instead of the L2 norm
+and applies the q-dependent loss function during calibration. Please refer to the example usage [here](https://github.com/Boulder-Investment-Technologies/lppls/blob/master/notebooks/quantile_regression.ipynb). 
+
 ## Other Search Algorithms
 Shu and Zhu (2019) proposed [CMA-ES](https://en.wikipedia.org/wiki/CMA-ES) for identifying the best estimation of the three non-linear parameters ($t_c$, $m$, $\omega$).
 > The CMA-ES rates among the most successful evolutionary
@@ -141,3 +145,4 @@ Performance Note: this works well for single fits but can take a long time for c
  - Shu, M. and Zhu, W. Real-time Prediction of Bitcoin Bubble Crashes. 2019.
  - Sornette, D. Why Stock Markets Crash: Critical Events in Complex Financial Systems. Princeton University Press. 2002.
  - Sornette, D. and Demos, G. and Zhang, Q. and Cauwels, P. and Filimonov, V. and Zhang, Q., Real-Time Prediction and Post-Mortem Analysis of the Shanghai 2015 Stock Market Bubble and Crash (August 6, 2015). Swiss Finance Institute Research Paper No. 15-31.
+ - Zhang, Q., Zhang, Q., and Sornette, D. Early Warning Signals of Financial Crises with Multi-Scale Quantile Regressions of Log-Periodic Power Law Singularities. PLOS ONE. 2016. DOI:10.1371/journal.pone.0165819
