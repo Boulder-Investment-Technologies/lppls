@@ -39,7 +39,6 @@ class LPPLS(object):
         Returns:
             (float)
         """
-
         tc = x[0]
         m = x[1]
         w = x[2]
@@ -53,7 +52,6 @@ class LPPLS(object):
         delta = [self.lppls(t, tc, m, w, a, b, c1, c2) for t in observations[0, :]]
         delta = np.subtract(delta, observations[1, :])
         delta = np.power(delta, 2)
-
         return np.sum(delta)
 
     @staticmethod
@@ -116,22 +114,20 @@ class LPPLS(object):
         if obs is None:
             obs = self.observations
 
-
-        # print('obs',obs)
         search_count = 0
         # find bubble
         while search_count < max_searches:
-            tc_init_min, tc_init_max = self._get_tc_bounds(obs, 0.50, 0.50)
+            # tc_init_min, tc_init_max = self._get_tc_bounds(obs, 0.50, 0.50)
             t1 = obs[0, 0]
             t2 = obs[0, -1]
 
             # @TODO make configurable
             # set random initialization limits for non-linear params
             init_limits = [
-                (max(t2 - 60, t2 - 0.5 * (t2 - t1)), min(t2 + 252, t2 + 0.5 * (t2 - t1))),  # tc
                 # (tc_init_min, tc_init_max),
-                (0.0, 1.0),  # m
-                (2.0, 15.0),  # ω
+                (t2 - 0.2 * (t2 - t1), t2 + 0.2 * (t2 - t1)),  # tc
+                (0.1, 1.0),  # m
+                (6.0, 13.0),  # ω
             ]
 
             # randomly choose vals within bounds for non-linear params
