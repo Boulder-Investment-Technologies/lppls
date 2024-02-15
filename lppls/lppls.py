@@ -27,7 +27,8 @@ class LPPLS(object):
     @staticmethod
     @njit
     def lppls(t, tc, m, w, a, b, c1, c2):
-        return a + np.power(tc - t, m) * (b + ((c1 * np.cos(w * np.log(tc - t))) + (c2 * np.sin(w * np.log(tc - t)))))
+        dt = np.abs(tc - t) + 1e-8
+        return a + np.power(dt, m) * (b + ((c1 * np.cos(w * np.log(dt))) + (c2 * np.sin(w * np.log(dt)))))
 
     def func_restricted(self, x, *args):
         """
@@ -49,7 +50,7 @@ class LPPLS(object):
         # print('type', type(res))
         # print('func_restricted', res)
 
-        delta = [self.lppls(t, tc, m, w, a, b, c1, c2) for t in observations[0, :]]
+        delta = self.lppls(observations[0, :], tc, m, w, a, b, c1, c2)
         delta = np.subtract(delta, observations[1, :])
         delta = np.power(delta, 2)
         return np.sum(delta)
@@ -64,8 +65,7 @@ class LPPLS(object):
         P = observations[1]
         N = len(T)
 
-        # @TODO make taking tc - t or |tc - t| configurable
-        dT = np.abs(tc - T)
+        dT = np.abs(tc - T) + 1e-8
         phase = np.log(dT)
 
         fi = np.power(dT, m)
@@ -98,6 +98,8 @@ class LPPLS(object):
             [np.sum(yigi)],
             [np.sum(yihi)]
         ])
+
+        matrix_1 += 1e-8 * np.eye(matrix_1.shape[0])
 
         return np.linalg.solve(matrix_1, matrix_2)
 
