@@ -146,9 +146,9 @@ class LPPLS(object):
             # Increment search count on SVD convergence error, but raise all other exceptions.
             try:
                 tc, m, w, a, b, c, c1, c2 = self.estimate_params(obs, seed, minimizer)
-                O = self.get_oscillations(w, tc, t1, t2)
-                D = self.get_damping(m, w, b, c)
-                return tc, m, w, a, b, c, c1, c2, O, D
+                # O = self.get_oscillations(w, tc, t1, t2)
+                # D = self.get_damping(m, w, b, c)
+                return tc, m, w, a, b, c, c1, c2, #O, D
             except Exception as e:
                 # print(e)
                 search_count += 1
@@ -270,8 +270,8 @@ class LPPLS(object):
                 w = fits["w"]
                 b = fits["b"]
                 c = fits["c"]
-                O = fits["O"]
-                D = fits["D"]
+                # O = fits["O"]
+                # D = fits["D"]
 
                 # t_delta = t2 - t1
                 # pct_delta_min = t_delta * 0.5
@@ -485,7 +485,7 @@ class LPPLS(object):
             i_idx += 1
             for j in range(0, window_delta, inner_increment):
                 obs_shrinking_slice = obs[:, j:window_size]
-                tc, m, w, a, b, c, c1, c2, O, D = self.fit(
+                tc, m, w, a, b, c, c1, c2 = self.fit(
                     max_searches, obs=obs_shrinking_slice
                 )
                 res[i_idx - 1].append([])
