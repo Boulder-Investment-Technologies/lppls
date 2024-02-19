@@ -614,7 +614,7 @@ class LPPLS(object):
         return False if m <= 0 or w <= 0 else abs((m * b) / (w * c)) > D_min
 
     def get_oscillations(self, w, tc, t1, t2):
-        dt = np.abs(tc - t2)
+        dt = np.abs(tc - t2) + 1e-8
         return (w / (2.0 * np.pi)) * np.log((tc - t1) / dt)
 
     def get_damping(self, m, w, b, c):
