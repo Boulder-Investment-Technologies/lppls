@@ -553,7 +553,7 @@ class LPPLS(object):
 
     def get_oscillations(self, w, tc, t1, t2):
         dt = np.abs(tc - t2)
-	return ((w / (2.0 * np.pi)) * np.log((tc - t1) / (dt)))
+	return ((w / (2.0 * np.pi)) * np.log((tc - t1) / dt))
 
     def get_damping(self, m, w, b, c):
         return (m * np.abs(b)) / (w * np.abs(c))
