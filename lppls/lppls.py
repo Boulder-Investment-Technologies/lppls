@@ -485,7 +485,7 @@ class LPPLS(object):
             i_idx += 1
             for j in range(0, window_delta, inner_increment):
                 obs_shrinking_slice = obs[:, j:window_size]
-                tc, m, w, a, b, c, c1, c2 = self.fit(
+                tc, m, w, a, b, c, _, _, _, _ = self.fit(
                     max_searches, obs=obs_shrinking_slice
                 )
                 res[i_idx - 1].append([])
