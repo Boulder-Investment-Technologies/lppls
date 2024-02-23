@@ -485,7 +485,7 @@ class LPPLS(object):
             i_idx += 1
             for j in range(0, window_delta, inner_increment):
                 obs_shrinking_slice = obs[:, j:window_size]
-                tc, m, w, a, b, c, c1, c2, O, D = self.fit(
+                tc, m, w, a, b, c, _, _, _, _ = self.fit(
                     max_searches, obs=obs_shrinking_slice
                 )
                 res[i_idx - 1].append([])
@@ -581,8 +581,8 @@ class LPPLS(object):
                     # "t2_d": self.ordinal_to_date(nested_t2),
                     "t1": nested_t1,
                     "t2": nested_t2,
-                    # "O": O,
-                    # "D": D,
+                    "O": O,
+                    "D": D,
                 }
             )
 
@@ -614,8 +614,7 @@ class LPPLS(object):
         return False if m <= 0 or w <= 0 else abs((m * b) / (w * c)) > D_min
 
     def get_oscillations(self, w, tc, t1, t2):
-        dt = np.abs(tc - t2) + 1e-8
-        return (w / (2.0 * np.pi)) * np.log((tc - t1) / dt)
+        return (w / (2.0 * np.pi)) * np.log((tc - t1) / (tc - t2))
 
     def get_damping(self, m, w, b, c):
         return (m * np.abs(b)) / (w * np.abs(c))

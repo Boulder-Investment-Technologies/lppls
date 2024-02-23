@@ -94,7 +94,7 @@ def test_mp_compute_nested_fits(observations, lppls_model):
     assert res[0]['t1'] == 0.0
     assert res[0]['t2'] == 79.0
     assert res[4]['t1'] == 20.0
-    expected_keys = {'tc_d', 'tc', 'm', 'w', 'a', 'b', 'c', 'c1', 'c2', 't1_d', 't2_d', 't1', 't2', 'O', 'D'}
+    expected_keys = {'tc', 'm', 'w', 'a', 'b', 'c', 'c1', 'c2', 't1', 't2', 'O', 'D'}
     assert len(res[0]['res']) == 30
     assert set(res[0]['res'][0]).issubset(expected_keys)
 
