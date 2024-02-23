@@ -568,7 +568,7 @@ class LPPLS(object):
 
             res.append(
                 {
-                    # "tc_d": self.ordinal_to_date(tc),
+                    "tc_d": self.ordinal_to_date(tc),
                     "tc": tc,
                     "m": m,
                     "w": w,
@@ -577,8 +577,8 @@ class LPPLS(object):
                     "c": c,
                     "c1": c1,
                     "c2": c2,
-                    # "t1_d": self.ordinal_to_date(nested_t1),
-                    # "t2_d": self.ordinal_to_date(nested_t2),
+                    "t1_d": self.ordinal_to_date(nested_t1),
+                    "t2_d": self.ordinal_to_date(nested_t2),
                     "t1": nested_t1,
                     "t2": nested_t2,
                     "O": O,
