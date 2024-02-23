@@ -146,9 +146,9 @@ class LPPLS(object):
             # Increment search count on SVD convergence error, but raise all other exceptions.
             try:
                 tc, m, w, a, b, c, c1, c2 = self.estimate_params(obs, seed, minimizer)
-                # O = self.get_oscillations(w, tc, t1, t2)
-                # D = self.get_damping(m, w, b, c)
-                return tc, m, w, a, b, c, c1, c2, #O, D
+                O = self.get_oscillations(w, tc, t1, t2)
+                D = self.get_damping(m, w, b, c)
+                return tc, m, w, a, b, c, c1, c2, O, D
             except Exception as e:
                 # print(e)
                 search_count += 1
@@ -270,8 +270,8 @@ class LPPLS(object):
                 w = fits["w"]
                 b = fits["b"]
                 c = fits["c"]
-                # O = fits["O"]
-                # D = fits["D"]
+                O = fits["O"]
+                D = fits["D"]
 
                 # t_delta = t2 - t1
                 # pct_delta_min = t_delta * 0.5
@@ -581,8 +581,8 @@ class LPPLS(object):
                     # "t2_d": self.ordinal_to_date(nested_t2),
                     "t1": nested_t1,
                     "t2": nested_t2,
-                    # "O": O,
-                    # "D": D,
+                    "O": O,
+                    "D": D,
                 }
             )
 
@@ -614,8 +614,7 @@ class LPPLS(object):
         return False if m <= 0 or w <= 0 else abs((m * b) / (w * c)) > D_min
 
     def get_oscillations(self, w, tc, t1, t2):
-        dt = np.abs(tc - t2) + 1e-8
-        return (w / (2.0 * np.pi)) * np.log((tc - t1) / dt)
+        return (w / (2.0 * np.pi)) * np.log((tc - t1) / (tc - t2))
 
     def get_damping(self, m, w, b, c):
         return (m * np.abs(b)) / (w * np.abs(c))
