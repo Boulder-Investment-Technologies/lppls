@@ -10,7 +10,9 @@
 The LPPLS model provides a flexible framework to detect bubbles and predict regime changes of a financial asset. A bubble is defined as a faster-than-exponential increase in asset price, that reflects positive feedback loop of higher return anticipations competing with negative feedback spirals of crash expectations. It models a bubble price as a power law with a finite-time singularity decorated by oscillations with a frequency increasing with time. 
 
 Try the demo: 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)]([your_colab_link_here](https://colab.research.google.com/drive/1Qvbdj4DGNcC9Oop9mA6Vzdvsoec6k2I0?usp=sharing))
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1Qvbdj4DGNcC9Oop9mA6Vzdvsoec6k2I0?usp=sharing)
+
 
 Here is the model:
 
