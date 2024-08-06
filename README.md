@@ -11,9 +11,7 @@ The LPPLS model provides a flexible framework to detect bubbles and predict regi
 
 Try the demo: 
 
-<a href="https://colab.research.google.com/drive/1Qvbdj4DGNcC9Oop9mA6Vzdvsoec6k2I0?usp=sharing" target="_blank">
-  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-</a>
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1Qvbdj4DGNcC9Oop9mA6Vzdvsoec6k2I0?usp=sharing)
 
 Here is the model:
 
