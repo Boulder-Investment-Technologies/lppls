@@ -9,7 +9,9 @@
 ## Overview
 The LPPLS model provides a flexible framework to detect bubbles and predict regime changes of a financial asset. A bubble is defined as a faster-than-exponential increase in asset price, that reflects positive feedback loop of higher return anticipations competing with negative feedback spirals of crash expectations. It models a bubble price as a power law with a finite-time singularity decorated by oscillations with a frequency increasing with time. 
 
-🆕 The LPPLS Confidence Indicator (LPPLS CI), an indicator derived from the LPPLS model, is applied to both G7 and BRICS nations and has been made available as a digital resource. To experience and interact with the data visualization, one can access the platform hosted by Boulder Investment Technologies at ✨[signals.boulderinvestment.tech](https://signals.boulderinvestment.tech)✨. 
+Try the demo: 
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1Qvbdj4DGNcC9Oop9mA6Vzdvsoec6k2I0?usp=sharing)
 
 Here is the model:
 
