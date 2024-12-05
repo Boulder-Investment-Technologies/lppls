@@ -7,8 +7,11 @@ import random
 from datetime import datetime as date
 from pandas._libs.tslibs.np_datetime import OutOfBoundsDatetime
 from scipy.optimize import minimize
+from sklearn.linear_model import LinearRegression
 from tqdm import tqdm
 import xarray as xr
+from typing import Any, Dict, Optional
+import warnings
 
 
 class LPPLS(object):
@@ -634,3 +637,107 @@ class LPPLS(object):
             return date.fromordinal(int(ordinal)).strftime("%Y-%m-%d")
         except (ValueError, OutOfBoundsDatetime):
             return str(pd.NaT)
+
+    def detect_bubble_start_time_via_lagrange(
+            self,
+            max_window_size: int,
+            min_window_size: int,
+            step_size: int = 1,
+            max_searches: int = 25,
+        ) -> Optional[Dict[str, Any]]:
+
+        window_sizes = []
+        sse_list = []
+        ssen_list = []
+        lagrange_sse_list = []
+        start_times = []
+        n_params = 7 # The number of degrees of freedom used for this exercise as well as for the real-world time series is p = 8, which includes the 7 parameters of the LPPLS model augmented by the extra parameter t1
+
+        total_obs = len(self.observations[0])
+
+        lppls_params_list = []
+
+        for window_size in range(max_window_size, min_window_size - 1, -step_size):
+            start_idx = total_obs - window_size
+            end_idx = total_obs
+            obs_window = self.observations[:, start_idx:end_idx]
+
+            start_time = self.observations[0][start_idx]
+            start_times.append(start_time)
+            t2 = self.observations[0][end_idx - 1]
+
+            try:
+                tc, m, w, a, b, _, c1, c2, _, _ = self.fit(max_searches, obs=obs_window)
+                if tc == 0.0:
+                    continue 
+
+                # compute predictions and residuals
+                Yhat = self.lppls(obs_window[0], tc, m, w, a, b, c1, c2)
+                residuals = obs_window[1] - Yhat
+
+                # compute SSE and normalized SSE
+                sse = np.sum(residuals ** 2)
+                n = len(obs_window[0])
+                if n - n_params <= 0:
+                    continue  # avoid division by zero or negative degrees of freedom
+                ssen = sse / (n - n_params)
+
+                window_sizes.append(window_size)
+                sse_list.append(sse)
+                ssen_list.append(ssen)
+                lppls_params_list.append({
+                    'tc': tc,
+                    'm': m,
+                    'w': w,
+                    'a': a,
+                    'b': b,
+                    'c1': c1,
+                    'c2': c2,
+                    'obs_window': obs_window  # may be useful later
+                })
+            except Exception as e:
+                print(e)
+                continue
+
+        if len(ssen_list) < 2:
+            warnings.warn("Not enough data points to compute Lagrange regularization.")
+            return None
+
+        window_sizes_np = np.array(window_sizes).reshape(-1, 1)
+        ssen_list_np = np.array(ssen_list)
+
+        # fit linear regression to normalized SSE vs. window sizes
+        reg = LinearRegression().fit(window_sizes_np, ssen_list_np)
+        slope = reg.coef_[0]
+        intercept = reg.intercept_
+
+        # compute Lagrange-regularized SSE
+        for i in range(len(sse_list)):
+            lagrange_sse = ssen_list[i] - slope * window_sizes[i]
+            lagrange_sse_list.append(lagrange_sse)
+
+        # find the optimal window size
+        min_index = np.argmin(lagrange_sse_list)
+        optimal_window_size = window_sizes[min_index]
+        optimal_params = lppls_params_list[min_index]  # get LPPLS parameters for optimal window
+
+        # get tau (start time of the bubble)
+        tau_idx = total_obs - optimal_window_size
+        tau = self.observations[0][tau_idx]
+
+        return {
+            "tau": tau,
+            "optimal_window_size": optimal_window_size,
+            "tc": optimal_params['tc'],
+            "m": optimal_params['m'],
+            "w": optimal_params['w'],
+            "a": optimal_params['a'],
+            "b": optimal_params['b'],
+            "c1": optimal_params['c1'],
+            "c2": optimal_params['c2'],
+            "window_sizes": window_sizes,
+            "sse_list": sse_list,
+            "ssen_list": ssen_list,
+            "lagrange_sse_list": lagrange_sse_list,
+            "start_times": start_times
+        }
