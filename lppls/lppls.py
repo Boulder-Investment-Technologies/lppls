@@ -499,7 +499,7 @@ class LPPLS(object):
             data=res,
             dims=("t2", "windowsizes", "params"),
             coords=dict(
-                t2=obs_copy[0][(window_size - 1) :],
+                t2=obs_copy[0][(window_size - 1) :: outer_increment],
                 windowsizes=range(smallest_window_size, window_size, inner_increment),
                 params=["t2", "t1", "a", "b", "c", "m", "0", "tc"],
             ),
