@@ -1,6 +1,7 @@
-![PyPI 📦   ](https://github.com/Boulder-Investment-Technologies/lppls/workflows/PyPI%20%F0%9F%93%A6%20%20%20/badge.svg?branch=master)
-![PyTests](https://github.com/Boulder-Investment-Technologies/lppls/workflows/PyTests/badge.svg?branch=master)
-[![Downloads](https://pepy.tech/badge/lppls)](https://pepy.tech/project/lppls)
+![Build Status](https://github.com/Boulder-Investment-Technologies/lppls/workflows/build/badge.svg?branch=master&event=push)
+[![Coverage](https://codecov.io/gh/Boulder-Investment-Technologies/lppls/branch/master/graph/badge.svg)](https://codecov.io/gh/Boulder-Investment-Technologies/lppls)
+[![PyPI Version](https://img.shields.io/pypi/v/lppls?style=plastic)](https://pypi.org/project/lppls/)
+[![PyPI Downloads](https://img.shields.io/pypi/dm/lppls?color=blue&style=plastic)](https://pypi.org/project/lppls/)
 
 # Log Periodic Power Law Singularity (LPPLS) Model 
 `lppls` is a Python module for fitting the LPPLS model to data.
