@@ -10,3 +10,5 @@ __pycache__/
 example.py
 
 outcmaes
+
+notebooks/*.csv

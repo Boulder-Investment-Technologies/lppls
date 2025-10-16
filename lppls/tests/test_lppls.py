@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
-import lppls
-import data_loader
+from lppls import lppls, data_loader
 import pytest
 import numpy as np
 

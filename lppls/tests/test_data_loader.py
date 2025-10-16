@@ -1,4 +1,4 @@
-import data_loader
+from lppls import data_loader
 import pytest
 
 

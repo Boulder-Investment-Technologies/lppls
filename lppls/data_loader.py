@@ -1,17 +1,10 @@
-import pkg_resources
+from importlib.resources import files
 import pandas as pd
 
 
-# def sp500():
-#     # This is a stream-like object. If you want the actual info, call
-#     # stream.read()
-#     stream = pkg_resources.resource_stream(__name__, 'data/sp500.csv')
-#     return pd.read_csv(stream, encoding='utf-8')
-
-
 def nasdaq_dotcom():
-    # This is a stream-like object. If you want the actual info, call
-    # stream.read()
-    stream = pkg_resources.resource_stream(__name__, 'data/nasdaq_dotcom.csv')
-    return pd.read_csv(stream, encoding='utf-8')
+    """Load the bundled Nasdaq Dot-com bubble dataset."""
+    source = files('lppls.data').joinpath('nasdaq_dotcom.csv')
+    with source.open('r', encoding='utf-8') as f:
+        return pd.read_csv(f)
 
