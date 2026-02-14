@@ -24,6 +24,76 @@ def lppls_model(observations):
     """Returns a model instance"""
     return lppls.LPPLS(observations=observations)
 
+
+# ---------------------------------------------------------------------------
+# Dependency / import smoke tests
+# ---------------------------------------------------------------------------
+
+def test_imports():
+    """Verify all key dependencies import without error."""
+    import matplotlib
+    import numba
+    import numpy
+    import pandas
+    import scipy
+    import sklearn
+    import tqdm
+    import xarray
+    import cma
+
+
+def test_numba_jit():
+    """Verify numba JIT compilation works on the core lppls function."""
+    # This calls the @njit-decorated static method, triggering compilation.
+    result = lppls.LPPLS.lppls(0.0, 100.0, 0.5, 8.0, 1000.0, -10.0, 0.1, -0.1)
+    assert np.isfinite(result)
+
+
+# ---------------------------------------------------------------------------
+# Basic model tests
+# ---------------------------------------------------------------------------
+
+def test_model_creation(observations):
+    """Verify model can be instantiated with observations."""
+    model = lppls.LPPLS(observations=observations)
+    assert model.observations is not None
+    assert model.observations.shape[0] == 2
+    assert model.observations.shape[1] == 100
+
+
+def test_matrix_equation(observations, lppls_model):
+    """Verify matrix_equation returns valid linear params."""
+    tc, m, w = 110.0, 0.5, 8.0
+    result = lppls_model.matrix_equation(observations, tc, m, w)
+    assert result.shape == (4, 1)
+    assert all(np.isfinite(result[:, 0]))
+
+
+def test_fit(observations, lppls_model):
+    """Verify fit() runs and returns 10 values with plausible types."""
+    result = lppls_model.fit(max_searches=25)
+    assert len(result) == 10
+    tc, m, w, a, b, c, c1, c2, O, D = result
+    # If fit succeeded, params should be non-zero
+    # If all searches failed, everything is 0 — both are acceptable
+    assert all(isinstance(v, (int, float, np.floating)) for v in result)
+
+
+def test_compute_nested_fits_xarray(observations, lppls_model):
+    """Verify compute_nested_fits returns an xarray.DataArray."""
+    import xarray as xr
+    result = lppls_model.compute_nested_fits(
+        window_size=80,
+        smallest_window_size=60,
+        outer_increment=20,
+        inner_increment=10,
+        max_searches=5,
+    )
+    assert isinstance(result, xr.DataArray)
+    assert "t2" in result.dims
+    assert "windowsizes" in result.dims
+    assert "params" in result.dims
+
 @pytest.mark.skip(reason='Reconsider testing approach in v0.6.x')
 def test_lppls(lppls_model):
     # Test that the base lppls function is giving expected results.
@@ -55,7 +125,7 @@ def test_minimize(observations, lppls_model):
         lppls_model.minimize(observations, seed, "SLSQP")
 
 @pytest.mark.skip(reason='Reconsider testing approach in v0.6.x')
-def test_fit(observations, lppls_model):
+def test_fit_slsqp(observations, lppls_model):
     # LPPLS.fit() uses random numbers which are not guaranteed to have parity across platforms.
     # The only test that will run every time is a check for exceptions.
 
@@ -73,7 +143,7 @@ def test__get_tc_bounds(observations, lppls_model):
     assert tc_init_max == 1508.4
 
 @pytest.mark.skip(reason='Reconsider testing approach in v0.6.x')
-def test_matrix_equation(observations, lppls_model):
+def test_matrix_equation_precision(observations, lppls_model):
     # Test that the linear params are generated in an expected way (10-decimal precision)
 
     # Case 1, expected values

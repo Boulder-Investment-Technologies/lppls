@@ -1,6 +1,7 @@
-![PyPI 📦   ](https://github.com/Boulder-Investment-Technologies/lppls/workflows/PyPI%20%F0%9F%93%A6%20%20%20/badge.svg?branch=master)
-![PyTests](https://github.com/Boulder-Investment-Technologies/lppls/workflows/PyTests/badge.svg?branch=master)
-[![Downloads](https://pepy.tech/badge/lppls)](https://pepy.tech/project/lppls)
+![Publish to PyPI](https://github.com/Boulder-Investment-Technologies/lppls/actions/workflows/publish-to-pypi.yml/badge.svg?branch=master)
+![PyTests](https://github.com/Boulder-Investment-Technologies/lppls/actions/workflows/pytest.yml/badge.svg?branch=master)
+[![PyPI Downloads](https://img.shields.io/pypi/dm/lppls?color=blue&style=plastic)](https://pypi.org/project/lppls/)
+
 
 # Log Periodic Power Law Singularity (LPPLS) Model 
 `lppls` is a Python module for fitting the LPPLS model to data.
@@ -41,13 +42,16 @@ The model has three components representing a bubble. The first, $A+B(t_c-t)^{m}
 Dependencies
 
 `lppls` requires:
- - Python (>= 3.7)
- - Matplotlib (>= 3.1.1)
- - Numba (>= 0.51.2)
- - NumPy (>= 1.17.0)
- - Pandas (>= 0.25.0)
- - SciPy (>= 1.3.0)
- - Pytest (>= 6.2.1)
+ - Python (>= 3.10)
+ - CMA-ES (>= 3.3.0)
+ - Matplotlib (>= 3.5.0)
+ - Numba (>= 0.56.0)
+ - NumPy (>= 1.23.0)
+ - Pandas (>= 1.5.0)
+ - SciPy (>= 1.9.0)
+ - Scikit-learn (>= 1.2.0)
+ - tqdm (>= 4.64.0)
+ - Xarray (>= 2024.1.0)
 
 User installation
 ```
