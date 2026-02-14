@@ -33,6 +33,15 @@ E[ln\ p(t)] = A + B(t_c-t)^{m}+C(t_c-t)^{m}\cos(\omega\ ln(t_c-t) - \phi)
     
 The model has three components representing a bubble. The first, $A+B(t_c-t)^{m}$, handles the hyperbolic power law. For $m$ < 1 when the price growth becomes unsustainable, and at $t_c$ the growth rate becomes infinite. The second term, $C(t_c-t)^{m}$, controls the amplitude of the oscillations. It drops to zero at the critical time $t_c$. The third term, $\cos(\omega\ ln(t_c-t) - \phi)$, models the frequency of the oscillations. They become infinite at $t_c$.
 
+## Lagrange Regularization for Bubble Start Time Detection
+The `lppls` library now includes a method for determining the start time of a financial bubble using Lagrange regularization. This technique, inspired by the work of Demos & Sornette (2017), addresses the challenge of model overfitting when the bubble's inception is unknown.
+
+By introducing a regularization term to the normalized sum of squared residuals, the method objectively identifies the optimal fitting window size. This allows for a more robust and data-driven estimation of the bubble's start time without requiring exogenous information, which is a significant improvement over previous approaches.
+
+![Lagrange Regularization Plot](https://raw.githubusercontent.com/Boulder-Investment-Technologies/lppls/master/img/lagrange_regularization_plot.png)
+
+This functionality is available through the `detect_bubble_start_time_via_lagrange` method. For detailed usage, please refer to the tutorial [here](https://github.com/Boulder-Investment-Technologies/lppls/blob/master/notebooks/lagrange_regularization.ipynb).
+
 ## Important links
  - Official source code repo: https://github.com/Boulder-Investment-Technologies/lppls
  - Download releases: https://pypi.org/project/lppls/
@@ -151,4 +160,5 @@ Performance Note: this works well for single fits but can take a long time for c
  - Shu, M. and Zhu, W. Real-time Prediction of Bitcoin Bubble Crashes. 2019.
  - Sornette, D. Why Stock Markets Crash: Critical Events in Complex Financial Systems. Princeton University Press. 2002.
  - Sornette, D. and Demos, G. and Zhang, Q. and Cauwels, P. and Filimonov, V. and Zhang, Q., Real-Time Prediction and Post-Mortem Analysis of the Shanghai 2015 Stock Market Bubble and Crash (August 6, 2015). Swiss Finance Institute Research Paper No. 15-31.
+ - Demos, G. and Sornette, D. Lagrange regularisation approach to compare nested data sets and determine objectively financial bubbles' inceptions. 2017. arXiv:1707.07162
  - Zhang, Q., Zhang, Q., and Sornette, D. Early Warning Signals of Financial Crises with Multi-Scale Quantile Regressions of Log-Periodic Power Law Singularities. PLOS ONE. 2016. DOI:10.1371/journal.pone.0165819
