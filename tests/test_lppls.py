@@ -16,7 +16,7 @@ def data():
 def observations(data):
     data = data.head(100)  # make it smaller so mp_compute_nested_fits runs faster
     time_ = np.linspace(0, len(data) - 1, len(data))
-    price = [p for p in data['Adj Close']]
+    price = [p for p in data["Adj Close"]]
     return np.array([time_, price])
 
 
@@ -30,17 +30,18 @@ def lppls_model(observations):
 # Dependency / import smoke tests
 # ---------------------------------------------------------------------------
 
+
 def test_imports():
     """Verify all key dependencies import without error."""
-    import matplotlib
-    import numba
-    import numpy
-    import pandas
-    import scipy
-    import sklearn
-    import tqdm
-    import xarray
-    import cma
+    import matplotlib  # noqa: F401
+    import numba  # noqa: F401
+    import numpy  # noqa: F401
+    import pandas  # noqa: F401
+    import scipy  # noqa: F401
+    import sklearn  # noqa: F401
+    import tqdm  # noqa: F401
+    import xarray  # noqa: F401
+    import cma  # noqa: F401
 
 
 def test_numba_jit():
@@ -53,19 +54,32 @@ def test_numba_jit():
 # Pure function tests (deterministic, no optimizer)
 # ---------------------------------------------------------------------------
 
+
 def test_lppls_function():
     """Verify the @njit lppls function returns expected values for known inputs."""
     # Period 0
     result = lppls.LPPLS.lppls(
-        0.0, 1300.2412888852296, 0.6087189222292106, 6.344318139503496,
-        3034.166016949172, -16.041970137173486, 0.21878280136703082, -0.14789336333436504,
+        0.0,
+        1300.2412888852296,
+        0.6087189222292106,
+        6.344318139503496,
+        3034.166016949172,
+        -16.041970137173486,
+        0.21878280136703082,
+        -0.14789336333436504,
     )
     assert result == pytest.approx(1762.3196588471408, rel=1e-6)
 
     # Period 500
     result = lppls.LPPLS.lppls(
-        500.0, 1428.0641475858731, 0.3473013071950998, 6.052643019980449,
-        3910.1099206097356, -169.93053270790418, 0.05189394517600043, -0.045820295077658835,
+        500.0,
+        1428.0641475858731,
+        0.3473013071950998,
+        6.052643019980449,
+        3910.1099206097356,
+        -169.93053270790418,
+        0.05189394517600043,
+        -0.045820295077658835,
     )
     assert result == pytest.approx(2086.3299554496016, rel=1e-6)
 
@@ -127,6 +141,7 @@ def test_ordinal_to_date(lppls_model):
 # Basic model tests
 # ---------------------------------------------------------------------------
 
+
 def test_model_creation(observations):
     """Verify model can be instantiated with observations."""
     model = lppls.LPPLS(observations=observations)
@@ -161,10 +176,10 @@ def test__get_tc_bounds(observations, lppls_model):
 def test__is_O_in_range(lppls_model):
     """Verify oscillation range check."""
     # Case 1, True
-    assert lppls_model._is_O_in_range(1000, 9.8, 800, 2.5) == True
+    assert lppls_model._is_O_in_range(1000, 9.8, 800, 2.5)
 
     # Case 2, False
-    assert lppls_model._is_O_in_range(1000, 9.7, 800, 2.5) == False
+    assert not lppls_model._is_O_in_range(1000, 9.7, 800, 2.5)
 
 
 def test__is_D_in_range(lppls_model):
@@ -190,6 +205,7 @@ def test__is_D_in_range(lppls_model):
 # ---------------------------------------------------------------------------
 # Fit tests (non-deterministic — use invariants, not exact values)
 # ---------------------------------------------------------------------------
+
 
 def test_fit(observations, lppls_model):
     """Verify fit() runs and returns 10 values with plausible types."""
@@ -232,9 +248,11 @@ def test_fit_exhausted_returns_zeros():
 # Integration tests
 # ---------------------------------------------------------------------------
 
+
 def test_compute_nested_fits_xarray(observations, lppls_model):
     """Verify compute_nested_fits returns a well-formed xarray.DataArray."""
     import xarray as xr
+
     result = lppls_model.compute_nested_fits(
         window_size=80,
         smallest_window_size=60,
@@ -252,12 +270,12 @@ def test_mp_compute_nested_fits(observations, lppls_model):
     """Verify mp_compute_nested_fits returns expected structure."""
     res = lppls_model.mp_compute_nested_fits(workers=1)
     assert len(res) == 5
-    assert res[0]['t1'] == 0.0
-    assert res[0]['t2'] == 79.0
-    assert res[4]['t1'] == 20.0
-    expected_keys = {'tc', 'm', 'w', 'a', 'b', 'c', 'c1', 'c2', 't1', 't2', 'O', 'D'}
-    assert len(res[0]['res']) == 30
-    assert set(res[0]['res'][0]).issubset(expected_keys)
+    assert res[0]["t1"] == 0.0
+    assert res[0]["t2"] == 79.0
+    assert res[4]["t1"] == 20.0
+    expected_keys = {"tc", "m", "w", "a", "b", "c", "c1", "c2", "t1", "t2", "O", "D"}
+    assert len(res[0]["res"]) == 30
+    assert set(res[0]["res"][0]).issubset(expected_keys)
 
 
 def test_detect_bubble_start_time_via_lagrange(observations, lppls_model):
@@ -270,8 +288,19 @@ def test_detect_bubble_start_time_via_lagrange(observations, lppls_model):
     )
     if result is not None:
         expected_keys = {
-            "tau", "optimal_window_size", "tc", "m", "w", "a", "b", "c1", "c2",
-            "window_sizes", "sse_list", "ssen_list", "lagrange_sse_list",
+            "tau",
+            "optimal_window_size",
+            "tc",
+            "m",
+            "w",
+            "a",
+            "b",
+            "c1",
+            "c2",
+            "window_sizes",
+            "sse_list",
+            "ssen_list",
+            "lagrange_sse_list",
         }
         assert expected_keys.issubset(result.keys())
         assert result["optimal_window_size"] >= 40
