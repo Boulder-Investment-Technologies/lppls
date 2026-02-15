@@ -33,15 +33,6 @@ E[ln\ p(t)] = A + B(t_c-t)^{m}+C(t_c-t)^{m}\cos(\omega\ ln(t_c-t) - \phi)
     
 The model has three components representing a bubble. The first, $A+B(t_c-t)^{m}$, handles the hyperbolic power law. For $m$ < 1 when the price growth becomes unsustainable, and at $t_c$ the growth rate becomes infinite. The second term, $C(t_c-t)^{m}$, controls the amplitude of the oscillations. It drops to zero at the critical time $t_c$. The third term, $\cos(\omega\ ln(t_c-t) - \phi)$, models the frequency of the oscillations. They become infinite at $t_c$.
 
-## Lagrange Regularization for Bubble Start Time Detection
-The `lppls` library now includes a method for determining the start time of a financial bubble using Lagrange regularization. This technique, inspired by the work of Demos & Sornette (2017), addresses the challenge of model overfitting when the bubble's inception is unknown.
-
-By introducing a regularization term to the normalized sum of squared residuals, the method objectively identifies the optimal fitting window size. This allows for a more robust and data-driven estimation of the bubble's start time without requiring exogenous information, which is a significant improvement over previous approaches.
-
-![Lagrange Regularization Plot](https://raw.githubusercontent.com/Boulder-Investment-Technologies/lppls/master/img/lagrange_regularization_plot.png)
-
-This functionality is available through the `detect_bubble_start_time_via_lagrange` method. For detailed usage, please refer to the tutorial [here](https://github.com/Boulder-Investment-Technologies/lppls/blob/master/notebooks/lagrange_regularization.ipynb).
-
 ## Important links
  - Official source code repo: https://github.com/Boulder-Investment-Technologies/lppls
  - Download releases: https://pypi.org/project/lppls/
@@ -138,6 +129,15 @@ If you wish to store `res` as a pd.DataFrame, use `compute_indicators`.
 ## Quantile Regression
 Based on the work in Zhang, Zhang & Sornette 2016, quantile regression for LPPLS uses the L1 norm (sum of absolute differences) instead of the L2 norm
 and applies the q-dependent loss function during calibration. Please refer to the example usage [here](https://github.com/Boulder-Investment-Technologies/lppls/blob/master/notebooks/quantile_regression.ipynb). 
+
+## Lagrange Regularization for Bubble Start Time Detection
+The `lppls` library includes a method for determining the start time of a financial bubble using Lagrange regularization. This technique, inspired by the work of Demos & Sornette (2017), addresses the challenge of model overfitting when the bubble's inception is unknown.
+
+By introducing a regularization term to the normalized sum of squared residuals, the method objectively identifies the optimal fitting window size. This allows for a more robust and data-driven estimation of the bubble's start time without requiring exogenous information, which is a significant improvement over previous approaches.
+
+![Lagrange Regularization Plot](https://raw.githubusercontent.com/Boulder-Investment-Technologies/lppls/master/img/lagrange_regularization_plot.png)
+
+This functionality is available through the `detect_bubble_start_time_via_lagrange` method. For detailed usage, please refer to the tutorial [here](https://github.com/Boulder-Investment-Technologies/lppls/blob/master/notebooks/lagrange_regularization.ipynb).
 
 ## Other Search Algorithms
 Shu and Zhu (2019) proposed [CMA-ES](https://en.wikipedia.org/wiki/CMA-ES) for identifying the best estimation of the three non-linear parameters ($t_c$, $m$, $\omega$).

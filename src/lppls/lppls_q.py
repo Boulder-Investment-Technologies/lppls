@@ -1,20 +1,23 @@
+from __future__ import annotations
+
 from lppls.lppls import LPPLS
 import numpy as np
+import pandas as pd
 
 
 class QLPPLS(LPPLS):
-    def __init__(self, observations, q=0.5):
+    def __init__(self, observations: np.ndarray | pd.DataFrame, q: float = 0.5) -> None:
         super().__init__(observations)
-        self.q = q
+        self.q: float = q
 
-    def func_restricted(self, x, *args):
+    def func_restricted(self, x: np.ndarray, *args: np.ndarray) -> float:
         """
         Finds the least absolute differences adjusted for the q-dependent loss function.
         Args:
-            x(np.ndarray):  1-D array with shape (n,).
+            x (np.ndarray):  1-D array with shape (n,).
             args: Tuple of the fixed parameters needed to completely specify the function.
         Returns:
-            (float)
+            float
         """
 
         tc = x[0]
@@ -30,6 +33,8 @@ class QLPPLS(LPPLS):
 
         # Use the L1 norm (sum of absolute differences) instead of the L2 norm
         # Apply the q-dependent loss function using the given quantile
-        loss = np.sum([-(1 - self.q) * e if e < 0 else self.q * e for e in np.abs(delta)])
+        loss = np.sum(
+            [-(1 - self.q) * e if e < 0 else self.q * e for e in np.abs(delta)]
+        )
 
         return loss

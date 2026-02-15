@@ -1,0 +1,16 @@
+name: 'Ruff'
+
+on: push
+
+jobs:
+  ruff:
+    name: 'Ruff'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/ruff-action@v3
+        with:
+          args: "format --check"
+      - uses: astral-sh/ruff-action@v3
+        with:
+          args: "check"

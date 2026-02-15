@@ -1,23 +1,26 @@
+from __future__ import annotations
+
 import cma as cm
 from lppls.lppls import LPPLS
+
 # import multiprocessing as mp
 import numpy as np
+import pandas as pd
 from scipy.stats import chisquare
 
 
 class LPPLSCMAES(LPPLS):
-
-    def __init__(self, observations):
+    def __init__(self, observations: np.ndarray | pd.DataFrame) -> None:
         super().__init__(observations)
         self.observations = observations
 
-    def fun_restricted(self, x, obs):
+    def fun_restricted(self, x: list[float], obs: np.ndarray) -> float:
         """
         Define the objective function for the CMA-ES optimizer
 
         Args:
-            x (List): objective variable
-            obs (): blah
+            x (list[float]): objective variable (tc, m, w).
+            obs (np.ndarray): 2xN observation array.
 
         Returns:
             float: error of the objective function
@@ -33,28 +36,31 @@ class LPPLSCMAES(LPPLS):
         t = obs[0, :]
         res = super().lppls(t, tc, m, w, a, b, c1, c2)
 
-
-
         # make nan or inf to zero
-        res[np.isnan(res)] = 0.
-        res[np.isinf(res)] = 0.
+        res[np.isnan(res)] = 0.0
+        res[np.isinf(res)] = 0.0
 
         # calculate the chi square
         error, _ = chisquare(f_obs=res, f_exp=obs[1, :])
         return error
 
-    def fit(self, max_iteration=1000, factor_sigma=0.1, pop_size=1, obs=None):
+    def fit(
+        self,
+        max_iteration: int = 1000,
+        factor_sigma: float = 0.1,
+        pop_size: int = 1,
+        obs: np.ndarray | None = None,
+    ) -> tuple[float, float, float, float, float, float, float, float, float, float]:
         """
-        Runs the optimazation loop
+        Runs the optimization loop.
 
         Args:
-            max_iteration (int, optional): maximum number of iterations. Defaults to 2500.
-            factor_sigma (float, optiona): factor to multiplying the range of the bounded values
-            pop_size (int, optional): population size for CMA ES
-            cores (int, optional): number of parallel runs
-            obs ():
+            max_iteration (int): Maximum number of iterations. Defaults to 1000.
+            factor_sigma (float): Factor for multiplying the range of the bounded values.
+            pop_size (int): Population size for CMA-ES.
+            obs (np.ndarray | None): Observation data. If None, uses self.observations.
         Returns:
-            [List]: all optimized and calculated values for tc, m, w, a, b, c, c1, c2
+            tuple: (tc, m, w, a, b, c, c1, c2, O, D)
         """
 
         if obs is None:
@@ -62,7 +68,7 @@ class LPPLSCMAES(LPPLS):
 
         # best guess of the starting values
         m = 0.5
-        w = 9.
+        w = 9.0
         # INFO: so far as I've understand the tc time this cannot be smaller als the max time of the time series
         tc = np.max(obs[0, :])
 
@@ -70,11 +76,18 @@ class LPPLSCMAES(LPPLS):
         opts = cm.CMAOptions()
         # here we define the initial search steps for CMAES usually I use to calculate the range of the
         # max and min bounds of the value and then apply a factor for sigma
-        opts.set('CMA_stds', [factor_sigma * tc, factor_sigma * (0.9 - 0.1), factor_sigma * (13. - 6.)])
-        opts.set('bounds', [(tc, 0.1, 6.), (np.inf, 0.9, 13.)])
-        opts.set('popsize', 10 * 2 ** pop_size)
+        opts.set(
+            "CMA_stds",
+            [
+                factor_sigma * tc,
+                factor_sigma * (0.9 - 0.1),
+                factor_sigma * (13.0 - 6.0),
+            ],
+        )
+        opts.set("bounds", [(tc, 0.1, 6.0), (np.inf, 0.9, 13.0)])
+        opts.set("popsize", 10 * 2**pop_size)
 
-        es = cm.CMAEvolutionStrategy(x0=[tc, m, w], sigma0=1., inopts=opts)
+        es = cm.CMAEvolutionStrategy(x0=[tc, m, w], sigma0=1.0, inopts=opts)
 
         # here we go
         while not es.stop() and es.countiter <= max_iteration:
@@ -104,7 +117,7 @@ class LPPLSCMAES(LPPLS):
             c = self.get_c(c1, c2)
 
             # Use sklearn format for storing fit params -> original code from lppls package
-            for coef in ['tc', 'm', 'w', 'a', 'b', 'c', 'c1', 'c2']:
+            for coef in ["tc", "m", "w", "a", "b", "c", "c1", "c2"]:
                 self.coef_[coef] = eval(coef)
 
             O = self.get_oscillations(w, tc, t1, t2)
