@@ -151,6 +151,9 @@ class LPPLS(object):
                 tc, m, w, a, b, c, c1, c2 = self.estimate_params(obs, seed, minimizer)
                 O = self.get_oscillations(w, tc, t1, t2)
                 D = self.get_damping(m, w, b, c)
+                if not np.isfinite(O) or not np.isfinite(D):
+                    search_count += 1
+                    continue
                 return tc, m, w, a, b, c, c1, c2, O, D
             except Exception as e:
                 # print(e)
@@ -617,7 +620,12 @@ class LPPLS(object):
         return False if m <= 0 or w <= 0 else abs((m * b) / (w * c)) > D_min
 
     def get_oscillations(self, w, tc, t1, t2):
-        return (w / (2.0 * np.pi)) * np.log((tc - t1) / (tc - t2))
+        denom = tc - t2
+        numer = tc - t1
+        ratio = numer / denom if denom != 0 else 0
+        if ratio <= 0:
+            return np.nan
+        return (w / (2.0 * np.pi)) * np.log(ratio)
 
     def get_damping(self, m, w, b, c):
         return (m * np.abs(b)) / (w * np.abs(c))
