@@ -105,7 +105,14 @@ res = lppls_model.mp_compute_nested_fits(
     outer_increment=1, 
     inner_increment=5, 
     max_searches=25,
-    # filter_conditions_config={} # not implemented in 0.6.x
+    filter_conditions_config={
+        "m_min": 0.0,
+        "m_max": 1.0,
+        "w_min": 2.0,
+        "w_max": 15.0,
+        "O_min": 2.5,
+        "D_min": 0.5,
+    },
 )
 
 lppls_model.plot_confidence_indicators(res)
