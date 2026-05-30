@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="lppls",
-    version="0.6.23",
+    version="0.6.24",
     description="A Python module for fitting the LPPLS model to data.",
     package_dir={"": "src"},
     packages=["lppls"],
