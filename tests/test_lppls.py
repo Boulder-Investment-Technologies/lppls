@@ -278,6 +278,217 @@ def test_mp_compute_nested_fits(observations, lppls_model):
     assert set(res[0]["res"][0]).issubset(expected_keys)
 
 
+def test_compute_indicators_respects_custom_filter_config(lppls_model):
+    """Custom thresholds should change fit qualification and confidence."""
+    res = [
+        {
+            "t1": 0.0,
+            "t2": 100.0,
+            "p2": 10.0,
+            "res": [
+                {
+                    "tc": 120.0,
+                    "m": 0.5,
+                    "w": 8.0,
+                    "a": 1.0,
+                    "b": -1.0,
+                    "c": 1.0,
+                    "c1": 0.0,
+                    "c2": 0.0,
+                    "t1": 0.0,
+                    "t2": 100.0,
+                    "O": 3.0,
+                    "D": 0.8,
+                },
+                {
+                    "tc": 120.0,
+                    "m": 0.5,
+                    "w": 8.0,
+                    "a": 1.0,
+                    "b": -1.0,
+                    "c": 1.0,
+                    "c1": 0.0,
+                    "c2": 0.0,
+                    "t1": 0.0,
+                    "t2": 100.0,
+                    "O": 1.0,
+                    "D": 0.8,
+                },
+            ],
+        }
+    ]
+    default_df = lppls_model.compute_indicators(res)
+    assert default_df["pos_conf"].iloc[0] == pytest.approx(0.5)
+
+    custom_df = lppls_model.compute_indicators(res, {"O_min": 0.5})
+    assert custom_df["pos_conf"].iloc[0] == pytest.approx(1.0)
+
+
+def test_compute_indicators_invalid_filter_key_raises(lppls_model):
+    """Unknown filter keys should raise a ValueError."""
+    with pytest.raises(ValueError):
+        lppls_model.compute_indicators([], {"unknown_threshold": 1.0})
+
+
+# ---------------------------------------------------------------------------
+# filter_conditions_config resolution / validation
+# ---------------------------------------------------------------------------
+
+
+def test_resolve_filter_conditions_config_none_returns_defaults():
+    """None should yield the full set of default thresholds."""
+    resolved = lppls.LPPLS._resolve_filter_conditions_config(None)
+    assert resolved == {
+        "m_min": 0.0,
+        "m_max": 1.0,
+        "w_min": 2.0,
+        "w_max": 15.0,
+        "O_min": 2.5,
+        "D_min": 0.5,
+        "tc_min_days": 60.0,
+        "tc_max_days": 252.0,
+        "tc_min_frac": 0.5,
+        "tc_max_frac": 0.5,
+    }
+
+
+def test_resolve_filter_conditions_config_merges_and_casts():
+    """Provided values override defaults and are coerced to float."""
+    resolved = lppls.LPPLS._resolve_filter_conditions_config({"O_min": 1, "D_min": 2})
+    assert resolved["O_min"] == 1.0
+    assert isinstance(resolved["O_min"], float)
+    assert resolved["D_min"] == 2.0
+    # Untouched keys keep their defaults.
+    assert resolved["m_max"] == 1.0
+
+
+def test_resolve_filter_conditions_config_non_dict_raises():
+    """A non-dict, non-None config should raise TypeError."""
+    with pytest.raises(TypeError):
+        lppls.LPPLS._resolve_filter_conditions_config([("O_min", 1.0)])
+
+
+@pytest.mark.parametrize(
+    "bad_config",
+    [
+        {"m_min": 1.0, "m_max": 0.0},
+        {"m_min": 0.5, "m_max": 0.5},
+        {"w_min": 15.0, "w_max": 2.0},
+        {"w_min": 5.0, "w_max": 5.0},
+        {"tc_min_days": -1.0},
+        {"tc_max_days": -1.0},
+        {"tc_min_frac": -0.1},
+        {"tc_max_frac": -0.1},
+    ],
+)
+def test_resolve_filter_conditions_config_invalid_ranges_raise(bad_config):
+    """Inconsistent or negative thresholds should raise ValueError."""
+    with pytest.raises(ValueError):
+        lppls.LPPLS._resolve_filter_conditions_config(bad_config)
+
+
+def _single_window_res(o_pos=3.0, b=-1.0, tc=120.0):
+    """Build a one-window nested-fit result with a single fit."""
+    return [
+        {
+            "t1": 0.0,
+            "t2": 100.0,
+            "p2": 10.0,
+            "res": [
+                {
+                    "tc": tc,
+                    "m": 0.5,
+                    "w": 8.0,
+                    "a": 1.0,
+                    "b": b,
+                    "c": 1.0,
+                    "c1": 0.0,
+                    "c2": 0.0,
+                    "t1": 0.0,
+                    "t2": 100.0,
+                    "O": o_pos,
+                    "D": 0.8,
+                }
+            ],
+        }
+    ]
+
+
+def test_compute_indicators_uses_stored_config(lppls_model):
+    """compute_indicators(None) should fall back to the stored instance config."""
+    res = _single_window_res(o_pos=1.0)
+    # With defaults (O_min=2.5) this fit fails the O condition.
+    assert lppls_model.compute_indicators(res)["pos_conf"].iloc[0] == pytest.approx(0.0)
+
+    # Storing a looser config (as mp_compute_nested_fits does) should be picked
+    # up when no explicit config is passed.
+    lppls_model.filter_conditions_config = (
+        lppls.LPPLS._resolve_filter_conditions_config({"O_min": 0.5})
+    )
+    assert lppls_model.compute_indicators(res)["pos_conf"].iloc[0] == pytest.approx(1.0)
+
+
+def test_compute_indicators_neg_conf_custom_config(lppls_model):
+    """Negative bubbles (b > 0) should be scored via neg_conf."""
+    res = _single_window_res(o_pos=1.0, b=1.0)
+    default_df = lppls_model.compute_indicators(res)
+    assert default_df["neg_conf"].iloc[0] == pytest.approx(0.0)
+    assert default_df["pos_conf"].iloc[0] == pytest.approx(0.0)
+
+    custom_df = lppls_model.compute_indicators(res, {"O_min": 0.5})
+    assert custom_df["neg_conf"].iloc[0] == pytest.approx(1.0)
+    assert custom_df["pos_conf"].iloc[0] == pytest.approx(0.0)
+
+
+def test_compute_indicators_tc_range_filtering(lppls_model):
+    """tc outside the configured critical-time window disqualifies a fit."""
+    # tc=400 is far beyond the default upper bound, so the fit fails.
+    res = _single_window_res(tc=400.0)
+    assert lppls_model.compute_indicators(res)["pos_conf"].iloc[0] == pytest.approx(0.0)
+
+    # Widening tc_max_days/tc_max_frac brings tc=400 into range.
+    widened = lppls_model.compute_indicators(
+        res, {"tc_max_days": 1000.0, "tc_max_frac": 5.0}
+    )
+    assert widened["pos_conf"].iloc[0] == pytest.approx(1.0)
+
+
+def test_mp_compute_nested_fits_stores_config(observations):
+    """mp_compute_nested_fits should resolve and persist the config."""
+    model = lppls.LPPLS(observations=observations)
+    assert model.filter_conditions_config is None
+    model.mp_compute_nested_fits(workers=1, filter_conditions_config={"O_min": 1.5})
+    assert model.filter_conditions_config["O_min"] == 1.5
+    # Defaults are still merged in for unspecified keys.
+    assert model.filter_conditions_config["m_max"] == 1.0
+
+
+def test_plot_confidence_indicators_forwards_config(lppls_model, monkeypatch):
+    """plot_confidence_indicators should forward its config to compute_indicators."""
+    import matplotlib
+
+    matplotlib.use("Agg")
+    captured = {}
+
+    def fake_compute_indicators(res, filter_conditions_config=None):
+        captured["config"] = filter_conditions_config
+        return pd.DataFrame(
+            {
+                "time": [738000.0],
+                "price": [1.0],
+                "pos_conf": [0.0],
+                "neg_conf": [0.0],
+            }
+        )
+
+    monkeypatch.setattr(lppls_model, "compute_indicators", fake_compute_indicators)
+
+    config = {"O_min": 0.5}
+    lppls_model.plot_confidence_indicators([], filter_conditions_config=config)
+    lppls.plt.close("all")
+    assert captured["config"] == config
+
+
 def test_detect_bubble_start_time_via_lagrange(observations, lppls_model):
     """Smoke test: Lagrange method runs without error and returns expected keys."""
     result = lppls_model.detect_bubble_start_time_via_lagrange(

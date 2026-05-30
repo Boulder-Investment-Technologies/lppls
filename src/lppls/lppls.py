@@ -29,6 +29,54 @@ class LPPLS:
         self.observations: np.ndarray | pd.DataFrame = observations
         self.coef_: dict[str, float] = {}
         self.indicator_result: list[dict[str, Any]] = []
+        self.filter_conditions_config: dict[str, float] | None = None
+
+    @staticmethod
+    def _resolve_filter_conditions_config(
+        filter_conditions_config: dict[str, Any] | None,
+    ) -> dict[str, float]:
+        """Validate and merge filter condition thresholds for indicators."""
+        defaults: dict[str, float] = {
+            "m_min": 0.0,
+            "m_max": 1.0,
+            "w_min": 2.0,
+            "w_max": 15.0,
+            "O_min": 2.5,
+            "D_min": 0.5,
+            "tc_min_days": 60.0,
+            "tc_max_days": 252.0,
+            "tc_min_frac": 0.5,
+            "tc_max_frac": 0.5,
+        }
+        if filter_conditions_config is None:
+            return defaults
+
+        if not isinstance(filter_conditions_config, dict):
+            raise TypeError(
+                "filter_conditions_config must be a dict[str, float] or None."
+            )
+
+        unknown_keys = set(filter_conditions_config.keys()) - set(defaults.keys())
+        if unknown_keys:
+            raise ValueError(
+                "Unknown filter condition keys: "
+                f"{sorted(unknown_keys)}. Supported keys: {sorted(defaults.keys())}."
+            )
+
+        resolved = defaults.copy()
+        for key, value in filter_conditions_config.items():
+            resolved[key] = float(value)
+
+        if resolved["m_min"] >= resolved["m_max"]:
+            raise ValueError("m_min must be < m_max.")
+        if resolved["w_min"] >= resolved["w_max"]:
+            raise ValueError("w_min must be < w_max.")
+        if resolved["tc_min_days"] < 0 or resolved["tc_max_days"] < 0:
+            raise ValueError("tc_min_days and tc_max_days must be >= 0.")
+        if resolved["tc_min_frac"] < 0 or resolved["tc_max_frac"] < 0:
+            raise ValueError("tc_min_frac and tc_max_frac must be >= 0.")
+
+        return resolved
 
     @staticmethod
     @njit
@@ -276,12 +324,21 @@ class LPPLS:
                 mp_compute_nested_fits. Each element is a dict with keys
                 't2', 'p2', and 'res' (a list of individual fit dicts).
             filter_conditions_config (dict, optional): Custom filter
-                thresholds. Not yet implemented; when None, the following
-                defaults are used:
-                  - m: (0.0, 1.0)
-                  - w: (2.0, 15.0)
-                  - O (oscillations): > 2.5
-                  - D (damping): > 0.5
+                thresholds. Supported keys:
+                  - m_min, m_max
+                  - w_min, w_max
+                  - O_min (oscillations lower bound)
+                  - D_min (damping lower bound)
+                  - tc_min_days, tc_max_days
+                  - tc_min_frac, tc_max_frac
+
+                The critical-time condition is:
+                  max(t2 - tc_min_days, t2 - tc_min_frac * (t2 - t1))
+                  < tc <
+                  min(t2 + tc_max_days, t2 + tc_max_frac * (t2 - t1))
+
+                If None, the default thresholds used in previous versions
+                are applied.
 
         Returns:
             pd.DataFrame: A DataFrame with columns:
@@ -297,15 +354,20 @@ class LPPLS:
         ts = []
         _fits = []
 
-        if filter_conditions_config is None:
-            # TODO make configurable again!
-            m_min, m_max = (0.0, 1.0)
-            w_min, w_max = (2.0, 15.0)
-            O_min = 2.5
-            D_min = 0.5
-        else:
-            # TODO parse user provided conditions
-            pass
+        effective_config = (
+            self.filter_conditions_config
+            if filter_conditions_config is None
+            else filter_conditions_config
+        )
+        conditions = self._resolve_filter_conditions_config(effective_config)
+        m_min, m_max = conditions["m_min"], conditions["m_max"]
+        w_min, w_max = conditions["w_min"], conditions["w_max"]
+        O_min = conditions["O_min"]
+        D_min = conditions["D_min"]
+        tc_min_days = conditions["tc_min_days"]
+        tc_max_days = conditions["tc_max_days"]
+        tc_min_frac = conditions["tc_min_frac"]
+        tc_max_frac = conditions["tc_max_frac"]
 
         for r in res:
             ts.append(r["t2"])
@@ -342,9 +404,9 @@ class LPPLS:
                 # print('______________')
 
                 tc_in_range = (
-                    max(t2 - 60, t2 - 0.5 * (t2 - t1))
+                    max(t2 - tc_min_days, t2 - tc_min_frac * (t2 - t1))
                     < tc
-                    < min(t2 + 252, t2 + 0.5 * (t2 - t1))
+                    < min(t2 + tc_max_days, t2 + tc_max_frac * (t2 - t1))
                 )
                 m_in_range = m_min < m < m_max
                 w_in_range = w_min < w < w_max
@@ -407,16 +469,23 @@ class LPPLS:
         return res_df
         # return ts, price, pos_lst, neg_lst, pos_conf_lst, neg_conf_lst, #tc_lst, m_lst, w_lst, O_lst, D_lst
 
-    def plot_confidence_indicators(self, res: list[dict[str, Any]]) -> None:
+    def plot_confidence_indicators(
+        self,
+        res: list[dict[str, Any]],
+        filter_conditions_config: dict[str, Any] | None = None,
+    ) -> None:
         """
         Args:
             res (list): result from mp_compute_indicator
-            condition_name (str): the name you assigned to the filter condition in your config
-            title (str): super title for both subplots
+            filter_conditions_config (dict, optional): Custom indicator
+                thresholds. If None, uses the most recently stored config
+                from ``mp_compute_nested_fits`` (or the library defaults).
         Returns:
             nothing, should plot the indicator
         """
-        res_df = self.compute_indicators(res)
+        res_df = self.compute_indicators(
+            res, filter_conditions_config=filter_conditions_config
+        )
         fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(18, 10))
 
         ord = res_df["time"].astype("int32")
@@ -546,8 +615,10 @@ class LPPLS:
                 attempt when fitting the LPPLS model for each sub-window. The
                 literature suggests 25. Higher values improve the chance of
                 finding a good fit but increase computation time. Default: 25.
-            filter_conditions_config (dict): Reserved for future use.
-                Not implemented in 0.6.x.
+            filter_conditions_config (dict, optional): Indicator filter
+                thresholds for downstream calls to ``compute_indicators`` /
+                ``plot_confidence_indicators``. This method stores the
+                resolved config on the model instance.
 
         Returns:
             list[dict]: A list of result dicts, one per outer window position.
@@ -559,6 +630,9 @@ class LPPLS:
                     sub-window, each containing fitted parameters
                     (tc, m, w, a, b, c, c1, c2, t1, t2, O, D).
         """
+        self.filter_conditions_config = self._resolve_filter_conditions_config(
+            filter_conditions_config
+        )
         obs_copy = self.observations
         obs_opy_len = len(obs_copy[0]) - window_size
         func = self._func_compute_nested_fits
